@@ -81,77 +81,172 @@
         <div class="absolute -top-24 -left-24 w-60 h-60 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-24 -right-24 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="relative z-10 space-y-6">
+        <div class="relative z-10 space-y-5">
           <!-- Top Badge & Title -->
           <div>
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-4">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Plataforma Financiera Comunitaria 2026</span>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Plataforma Financiera Comunitaria 2026</span>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono">Fondo Activo • 24 Quincenas</span>
             </div>
             
             <div class="flex items-center space-x-3 mb-2">
-              <div class="w-12 h-12 rounded-2xl gradient-indigo flex items-center justify-center text-white shadow-xl glow-indigo">
+              <div class="w-12 h-12 rounded-2xl gradient-indigo flex items-center justify-center text-white shadow-xl glow-indigo shrink-0">
                 <i data-lucide="wallet-cards" class="w-6 h-6"></i>
               </div>
               <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
                   NATILLERA 2026
                 </h1>
-                <p class="text-xs text-slate-400 font-medium">Control de Ahorro y Créditos en la Nube</p>
+                <p class="text-xs text-slate-400 font-medium">Control Inteligente de Ahorro y Créditos</p>
               </div>
             </div>
+          </div>
 
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mt-3">
+          <!-- Interactive Information Tabs Navigation -->
+          <div class="flex items-center space-x-1.5 p-1 rounded-2xl bg-surface-dark/80 border border-slate-700/60 text-xs">
+            <button type="button" id="btnLoginTab_resumen" onclick="switchLoginTab('resumen')" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-md transition">
+              <span class="flex items-center space-x-1.5">
+                <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                <span>Resumen</span>
+              </span>
+            </button>
+            <button type="button" id="btnLoginTab_reglas" onclick="switchLoginTab('reglas')" class="px-3 py-1.5 rounded-xl font-medium text-xs text-slate-400 hover:text-white transition">
+              <span class="flex items-center space-x-1.5">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                <span>Reglamento 2026</span>
+              </span>
+            </button>
+            <button type="button" id="btnLoginTab_faq" onclick="switchLoginTab('faq')" class="px-3 py-1.5 rounded-xl font-medium text-xs text-slate-400 hover:text-white transition">
+              <span class="flex items-center space-x-1.5">
+                <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                <span>Seguridad & FAQ</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- TAB 1: RESUMEN -->
+          <div id="loginTabResumen" class="space-y-4">
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
               Sistema integral privado para el control quincenal de ahorros, gestión de créditos comunitarios con cálculo de intereses en tiempo real y emisión automatizada de comprobantes directos para WhatsApp.
             </p>
+
+            <!-- Feature Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <div class="p-3 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+                <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                  <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <strong class="text-white block font-bold">13 Socios Activos</strong>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Control de aportes quincenales, metas anuales y cumplimiento en vivo.</p>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+                <div class="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                  <i data-lucide="percent" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <strong class="text-white block font-bold">Créditos al 0.5% Mensual</strong>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Intereses diarios exactos y congelamiento automático a fecha de pago.</p>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+                <div class="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0">
+                  <i data-lucide="message-circle" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <strong class="text-white block font-bold">Comprobantes WhatsApp</strong>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Recibos digitales y descarga de imágenes HD con un solo clic.</p>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+                <div class="p-2 rounded-xl bg-purple-500/20 text-purple-400 shrink-0">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <strong class="text-white block font-bold">Seguridad con Auto-Cierre</strong>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Cierre de sesión automático tras 30 minutos de inactividad.</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Feature Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
-              <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
-                <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+          <!-- TAB 2: REGLAMENTO OFICIAL 2026 -->
+          <div id="loginTabReglas" class="hidden space-y-3 text-xs">
+            <div class="p-3 rounded-2xl bg-surface-card/70 border border-indigo-500/30 space-y-2">
+              <div class="flex items-center space-x-2 text-indigo-300 font-bold">
+                <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i>
+                <span>Aportes Quincenales y Calendario</span>
               </div>
-              <div>
-                <strong class="text-white block font-bold">13 Socios Activos</strong>
-                <p class="text-[11px] text-slate-400 mt-0.5">Control de aportes quincenales, metas anuales y cumplimiento en vivo.</p>
-              </div>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                El ciclo comprende <strong>24 quincenas</strong> durante 2026. Fechas límites de consignación: días <strong>15 y 30</strong> de cada mes. Cuota estándar de $40.000 o $50.000 quincenal para una meta individual de $960.000 a $1.200.000.
+              </p>
             </div>
 
-            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
-              <div class="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
-                <i data-lucide="percent" class="w-4 h-4"></i>
+            <div class="p-3 rounded-2xl bg-surface-card/70 border border-amber-500/30 space-y-2">
+              <div class="flex items-center space-x-2 text-amber-300 font-bold">
+                <i data-lucide="calculator" class="w-4 h-4 text-amber-400"></i>
+                <span>Tasa de Créditos e Intereses Congelados</span>
               </div>
-              <div>
-                <strong class="text-white block font-bold">Créditos al 0.5% Mensual</strong>
-                <p class="text-[11px] text-slate-400 mt-0.5">Intereses diarios exactos y congelamiento automático a fecha de pago.</p>
-              </div>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                Tasa preferencial fija del <strong>0.5% mensual</strong> con liquidación exacta por días. Al realizar el pago total, los intereses se <strong>congelan de inmediato a la fecha de pago</strong> para evitar cobros adicionales.
+              </p>
             </div>
 
-            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
-              <div class="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0">
-                <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <div class="p-3 rounded-2xl bg-surface-card/70 border border-emerald-500/30 space-y-2">
+              <div class="flex items-center space-x-2 text-emerald-300 font-bold">
+                <i data-lucide="gift" class="w-4 h-4 text-emerald-400"></i>
+                <span>Reparto de Ganancias (Diciembre 2026)</span>
               </div>
-              <div>
-                <strong class="text-white block font-bold">Comprobantes WhatsApp</strong>
-                <p class="text-[11px] text-slate-400 mt-0.5">Recibos digitales y descarga de imágenes HD con un solo clic.</p>
-              </div>
-            </div>
-
-            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
-              <div class="p-2 rounded-xl bg-purple-500/20 text-purple-400 shrink-0">
-                <i data-lucide="shield-check" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <strong class="text-white block font-bold">Seguridad con Auto-Cierre</strong>
-                <p class="text-[11px] text-slate-400 mt-0.5">Cierre de sesión automático tras 30 minutos de inactividad.</p>
-              </div>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                El <strong>100% de los intereses</strong> generados por los créditos se distribuirán equitativamente entre los socios que cumplieron oportunamente con la totalidad de sus aportes quincenales.
+              </p>
             </div>
           </div>
+
+          <!-- TAB 3: SEGURIDAD & PREGUNTAS FRECUENTES -->
+          <div id="loginTabFaq" class="hidden space-y-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-surface-card/70 border border-slate-700/60">
+              <strong class="text-white flex items-center space-x-1.5 font-bold mb-1">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>¿Quién puede acceder a la administración?</span>
+              </strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                Solo el Administrador Principal (<strong>shenao356</strong>) tiene permisos para registrar pagos, crear créditos, editar socios y enviar comprobantes oficiales.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-surface-card/70 border border-slate-700/60">
+              <strong class="text-white flex items-center space-x-1.5 font-bold mb-1">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>¿Cómo funcionan las reglas de comprobantes?</span>
+              </strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                El sistema valida estrictamente cada operación: no permite emitir certificados de Paz y Salvo si hay deuda activa, ni confundir un desembolso de préstamo con un aporte de ahorro.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-surface-card/70 border border-slate-700/60">
+              <strong class="text-white flex items-center space-x-1.5 font-bold mb-1">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>¿Por qué se cierra la sesión a los 30 minutos?</span>
+              </strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">
+                Como medida de seguridad bancaria, si no se detecta interacción durante 30 minutos continuos, la sesión se bloquea para proteger los datos financieros del grupo.
+              </p>
+            </div>
+          </div>
+
         </div>
 
         <!-- Metrics Banner Footer -->
-        <div class="relative z-10 mt-6 pt-4 border-t border-slate-700/60 grid grid-cols-4 gap-2 text-center text-xs">
+        <div class="relative z-10 mt-5 pt-3.5 border-t border-slate-700/60 grid grid-cols-4 gap-2 text-center text-xs">
           <div>
             <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Socios</span>
             <strong class="text-white text-base font-black">13</strong>
@@ -848,6 +943,35 @@
               <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i>
               <span>Configuración del Comprobante</span>
             </h3>
+
+            <!-- Guided Mode Notice -->
+            <div id="receiptGuidedNotice" class="hidden p-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-[11px] text-indigo-200 flex items-center justify-between">
+              <span class="flex items-center space-x-1.5 truncate">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-indigo-400 shrink-0"></i>
+                <span id="receiptGuidedNoticeText" class="truncate font-medium">Modo Guiado Activo</span>
+              </span>
+              <button type="button" onclick="unlockReceiptTypeSelect()" class="text-[10px] text-cyan-300 hover:text-white font-bold underline shrink-0 ml-2">
+                Modo libre
+              </button>
+            </div>
+
+            <!-- Rule Compliance Alert Box -->
+            <div id="receiptRuleBanner" class="p-3 rounded-xl bg-surface-dark border border-slate-700/70 text-[11px] space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold flex items-center space-x-1.5 text-slate-200">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  <span id="receiptRuleTitle">Regla: Recibo de Ahorro</span>
+                </span>
+                <span id="receiptRuleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">VÁLIDO</span>
+              </div>
+              <p id="receiptRuleDesc" class="text-slate-400 text-[10px] leading-tight">
+                Se registra como aporte para la meta de ahorro 2026 del socio seleccionado.
+              </p>
+              <div id="receiptRuleWarning" class="hidden mt-2 p-2 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-200 text-[11px] flex items-start space-x-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
+                <span id="receiptRuleWarningText">Advertencia de validación</span>
+              </div>
+            </div>
 
             <div class="space-y-3 text-xs">
               <div>

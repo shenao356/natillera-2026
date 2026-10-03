@@ -1247,8 +1247,77 @@ function populateDropdowns() {
   if (receiptMonto && !receiptMonto.value) receiptMonto.value = '40000';
 }
 
+// State for guided/locked receipt generation
+let receiptLockState = {
+  isLocked: false,
+  lockedType: null,
+  actionReason: ''
+};
+
+function switchLoginTab(tab) {
+  const tabResumen = document.getElementById('loginTabResumen');
+  const tabReglas = document.getElementById('loginTabReglas');
+  const tabFaq = document.getElementById('loginTabFaq');
+
+  if (tabResumen) tabResumen.classList.toggle('hidden', tab !== 'resumen');
+  if (tabReglas) tabReglas.classList.toggle('hidden', tab !== 'reglas');
+  if (tabFaq) tabFaq.classList.toggle('hidden', tab !== 'faq');
+
+  ['resumen', 'reglas', 'faq'].forEach(t => {
+    const btn = document.getElementById(`btnLoginTab_${t}`);
+    if (btn) {
+      if (t === tab) {
+        btn.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-md transition';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-xl font-medium text-xs text-slate-400 hover:text-white transition';
+      }
+    }
+  });
+  lucide.createIcons();
+}
+
+function lockReceiptType(type, reason) {
+  receiptLockState.isLocked = true;
+  receiptLockState.lockedType = type;
+  receiptLockState.actionReason = reason;
+
+  const select = document.getElementById('receiptTypeSelect');
+  if (select) {
+    select.value = type;
+    select.disabled = true;
+  }
+
+  const notice = document.getElementById('receiptGuidedNotice');
+  const noticeText = document.getElementById('receiptGuidedNoticeText');
+  if (notice && noticeText) {
+    notice.classList.remove('hidden');
+    noticeText.textContent = reason || `Modo Guiado: Bloqueado a ${type.toUpperCase()}`;
+  }
+}
+
+function unlockReceiptTypeSelect() {
+  receiptLockState.isLocked = false;
+  receiptLockState.lockedType = null;
+  receiptLockState.actionReason = '';
+
+  const select = document.getElementById('receiptTypeSelect');
+  if (select) select.disabled = false;
+
+  const notice = document.getElementById('receiptGuidedNotice');
+  if (notice) notice.classList.add('hidden');
+
+  showToast('Selector de comprobante desbloqueado en modo libre', 'info');
+  updateReceiptGeneratorFields();
+}
+
 function updateReceiptGeneratorFields() {
-  const type = document.getElementById('receiptTypeSelect').value;
+  const select = document.getElementById('receiptTypeSelect');
+  if (receiptLockState.isLocked && receiptLockState.lockedType) {
+    select.value = receiptLockState.lockedType;
+    select.disabled = true;
+  }
+
+  const type = select.value;
   const grpQuincena = document.getElementById('receiptGroupQuincena');
   const grpCredito = document.getElementById('receiptGroupCredito');
 
@@ -1290,8 +1359,8 @@ function updateReceiptGeneratorFields() {
 }
 
 function onReceiptSocioChange() {
-  const socio = document.getElementById('receiptSocioSelect').value;
-  const user = (AppState.data.ahorradores || []).find(a => a.nombre.toLowerCase() === socio.toLowerCase());
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect').value);
+  const user = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === socio);
   const phoneInput = document.getElementById('receiptTelefonoInput');
   const userPhone = user && user.telefono ? user.telefono : '';
 
@@ -1356,16 +1425,16 @@ function quickEditCurrentSocioPhone() {
 }
 
 function updateCreditosDropdownForReceipt() {
-  const socio = document.getElementById('receiptSocioSelect').value;
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect').value);
   const select = document.getElementById('receiptCreditoSelect');
   if (!select) return;
 
-  const userCredits = (AppState.data.creditos || []).filter(c => c.socio.toLowerCase() === socio.toLowerCase());
+  const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === socio);
   if (userCredits.length === 0) {
-    select.innerHTML = '<option value="">(Sin créditos registrados)</option>';
+    select.innerHTML = '<option value="">(Sin créditos registrados para este socio)</option>';
   } else {
     select.innerHTML = userCredits.map(c => `
-      <option value="${c.id}">Crédito #${c.numInterno || 1} - ${formatCOP(c.valorCredito)} (${c.fechaCredito || ''})</option>
+      <option value="${c.id}">Crédito #${c.numInterno || 1} - ${formatCOP(c.valorCredito)} (${c.fechaCredito || ''}) - Estado: ${c.estado}</option>
     `).join('');
   }
 }
@@ -1375,11 +1444,82 @@ function onReceiptCreditoChange() {
 }
 
 /**
+ * Validates business rules across receipt types to prevent confusion
+ */
+function validateReceiptRules(type, socio, monto, credObj, metrics) {
+  const titleEl = document.getElementById('receiptRuleTitle');
+  const badgeEl = document.getElementById('receiptRuleBadge');
+  const descEl = document.getElementById('receiptRuleDesc');
+  const warningEl = document.getElementById('receiptRuleWarning');
+  const warningTextEl = document.getElementById('receiptRuleWarningText');
+
+  let isValid = true;
+  let ruleTitle = '';
+  let ruleDesc = '';
+  let warningMsg = '';
+
+  const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === socio);
+
+  if (type === 'ahorro') {
+    ruleTitle = 'Regla: Cuota Quincenal de Ahorro';
+    ruleDesc = `Aporte para la meta anual del socio ${socio}. NO amortiza créditos ni afecta saldos de deuda.`;
+    isValid = true;
+  } else if (type === 'desembolso') {
+    ruleTitle = 'Regla: Desembolso de Nuevo Préstamo';
+    ruleDesc = 'Certifica la entrega del dinero prestado al deudor con tasa fija del 0.5% mensual. Solo aplica al entregar el capital.';
+    if (userCredits.length === 0) {
+      isValid = false;
+      warningMsg = `⚠️ Inconsistencia: ${socio} no registra préstamos en el sistema. Primero debes crear el crédito en la pestaña 'Créditos'.`;
+    }
+  } else if (type === 'abono') {
+    ruleTitle = 'Regla: Abono a Crédito Activo';
+    ruleDesc = 'Registra amortización a capital e intereses devengados de un préstamo en curso.';
+    if (userCredits.length === 0) {
+      isValid = false;
+      warningMsg = `⚠️ Inconsistencia: ${socio} NO registra créditos para abonar. Si es un ahorro quincenal, cambia el tipo a 'Recibo de Cuota de Ahorro'.`;
+    } else if (credObj && credObj.estado === 'PAGADO') {
+      warningMsg = `ℹ️ Nota: El Crédito #${credObj.numInterno || 1} ya está totalmente pagado. Para certificar su cancelación oficial, usa 'Certificado de Paz y Salvo'.`;
+    }
+  } else if (type === 'pazysalvo') {
+    ruleTitle = 'Regla de Seguridad: Certificado de Paz y Salvo';
+    ruleDesc = 'Solo se autoriza si el crédito está 100% saldado (saldo capital $0 e intereses $0).';
+    if (userCredits.length === 0) {
+      isValid = false;
+      warningMsg = `⚠️ Prohibido emitir Paz y Salvo: ${socio} nunca ha tenido créditos registrados en el sistema.`;
+    } else if (credObj && metrics && metrics.totalPagarHoy > 0) {
+      isValid = false;
+      warningMsg = `🚫 REGLA DE SEGURIDAD VIOLADA: El Crédito #${credObj.numInterno || 1} de ${socio} aún tiene una deuda activa de ${formatCOP(metrics.totalPagarHoy)} (${formatCOP(metrics.saldoCapital)} capital + ${formatCOP(metrics.saldoInteres)} intereses). ESTÁ ESTRICTAMENTE PROHIBIDO emitir Paz y Salvo con deuda pendiente.`;
+    }
+  }
+
+  // Update UI indicators
+  if (titleEl) titleEl.textContent = ruleTitle;
+  if (descEl) descEl.textContent = ruleDesc;
+  if (badgeEl) {
+    badgeEl.textContent = isValid ? 'VÁLIDO' : 'INCONSISTENTE';
+    badgeEl.className = isValid 
+      ? 'px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+      : 'px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse';
+  }
+
+  if (warningEl && warningTextEl) {
+    if (warningMsg) {
+      warningEl.classList.remove('hidden');
+      warningTextEl.textContent = warningMsg;
+    } else {
+      warningEl.classList.add('hidden');
+    }
+  }
+
+  return isValid;
+}
+
+/**
  * Builds the Digital Voucher & WhatsApp formatted text
  */
 function renderReceiptPreview() {
   const type = document.getElementById('receiptTypeSelect')?.value || 'ahorro';
-  const socio = document.getElementById('receiptSocioSelect')?.value || 'Socio';
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect')?.value || 'Socio');
   const monto = parseFloat(document.getElementById('receiptMontoInput')?.value) || 0;
   const fecha = document.getElementById('receiptFechaInput')?.value || getTodayStr();
   const medio = document.getElementById('receiptMedioSelect')?.value || 'Transferencia';
@@ -1395,6 +1535,13 @@ function renderReceiptPreview() {
   document.getElementById('previewReceiptMedio').textContent = medio;
   document.getElementById('previewReceiptFechaHora').textContent = fecha;
   document.getElementById('previewReceiptFolio').textContent = '#REC-' + Math.floor(1000 + Math.random() * 9000);
+
+  const credId = document.getElementById('receiptCreditoSelect')?.value;
+  const credObj = (AppState.data.creditos || []).find(c => c.id === credId);
+  const metrics = credObj ? calculateCreditMetrics(credObj) : null;
+
+  // Validate business rules
+  const isValidRule = validateReceiptRules(type, socio, monto, credObj, metrics);
 
   let concepto = '';
   let whatsappMsg = '';
@@ -1423,14 +1570,17 @@ ${nota ? `📝 *Nota:* ${nota}\n----------------------------------------\n` : ''
 ¡Gracias por tu puntualidad y esfuerzo! 🌟`;
 
   } else if (type === 'abono') {
-    const credId = document.getElementById('receiptCreditoSelect')?.value;
-    const credObj = (AppState.data.creditos || []).find(c => c.id === credId);
-    const metrics = credObj ? calculateCreditMetrics(credObj) : null;
     const saldoRestante = metrics ? metrics.totalPagarHoy : 0;
-
     concepto = `Abono a Crédito #${credObj ? (credObj.numInterno || 1) : 1}`;
-    document.getElementById('previewReceiptConcepto').textContent = concepto;
-    document.getElementById('previewReceiptSaldoCredito').textContent = formatCOP(saldoRestante);
+    
+    if (!isValidRule) {
+      document.getElementById('previewReceiptConcepto').textContent = '⚠️ ABONO INVÁLIDO (SIN CRÉDITOS ASOCIADOS)';
+      document.getElementById('previewReceiptSaldoCredito').textContent = 'INCONSISTENTE';
+    } else {
+      document.getElementById('previewReceiptConcepto').textContent = concepto;
+      document.getElementById('previewReceiptSaldoCredito').textContent = formatCOP(saldoRestante);
+    }
+    
     document.getElementById('previewReceiptNota').textContent = nota || 'Pago registrado exitosamente en el sistema.';
 
     whatsappMsg = `💳 *NATILLERA 2026 - COMPROBANTE DE ABONO* 💳
@@ -1447,36 +1597,55 @@ ${nota ? `📝 *Nota:* ${nota}\n----------------------------------------\n` : ''
 ¡Agradecemos tu oportuno abono! 🙌`;
 
   } else if (type === 'desembolso') {
-    concepto = 'Desembolso de Nuevo Crédito';
+    concepto = `Desembolso de Préstamo #${credObj ? (credObj.numInterno || 1) : 1}`;
     document.getElementById('previewReceiptConcepto').textContent = concepto;
     document.getElementById('previewReceiptSaldoCredito').textContent = formatCOP(monto);
-    document.getElementById('previewReceiptNota').textContent = nota || 'Dinero entregado a satisfacción.';
+    document.getElementById('previewReceiptNota').textContent = nota || 'Capital entregado a satisfacción.';
 
     whatsappMsg = `🤝 *NATILLERA 2026 - CONSTANCIA DE PRÉSTAMO* 🤝
 ----------------------------------------
 👤 *Socio / Deudor:* ${socio}
 📅 *Fecha Desembolso:* ${fecha}
 💰 *Capital Entregado:* ${formatCOP(monto)}
-📈 *Tasa Mensual:* 0.5% (Interés congelado a fecha de pago)
+📈 *Tasa Mensual:* 0.5% (Intereses congelados al día de pago)
 ----------------------------------------
-✅ *Administrador:* Santiago Henao`;
+${nota ? `📝 *Nota:* ${nota}\n----------------------------------------\n` : ''}✅ *Administrador:* Santiago Henao
+Compromiso de crédito registrado en el sistema.`;
 
   } else {
     // Paz y salvo
-    concepto = 'Cancelación Total / Paz y Salvo de Crédito';
-    document.getElementById('previewReceiptConcepto').textContent = concepto;
-    document.getElementById('previewReceiptSaldoCredito').textContent = '$0 (CANCELADO)';
-    document.getElementById('previewReceiptNota').textContent = nota || '¡Felicidades! Crédito totalmente pagado.';
+    if (!isValidRule && metrics && metrics.totalPagarHoy > 0) {
+      concepto = `🚫 PAZ Y SALVO INVÁLIDO - DEUDA PENDIENTE: ${formatCOP(metrics.totalPagarHoy)}`;
+      document.getElementById('previewReceiptConcepto').textContent = concepto;
+      document.getElementById('previewReceiptSaldoCredito').textContent = `DEBE ${formatCOP(metrics.totalPagarHoy)}`;
+      document.getElementById('previewReceiptNota').textContent = '⚠️ ESTE DOCUMENTO NO TIENE VALIDEZ HASTA SALDAR LA DEUDA.';
 
-    whatsappMsg = `🎉 *NATILLERA 2026 - CERTIFICADO DE PAZ Y SALVO* 🎉
+      whatsappMsg = `⚠️ *NATILLERA 2026 - NOTIFICACIÓN DE SALDO PENDIENTE* ⚠️
 ----------------------------------------
 👤 *Socio:* ${socio}
 📅 *Fecha:* ${fecha}
-✨ *ESTADO:* PAZ Y SALVO TOTAL
+❌ *ESTADO:* NO APLICA PAZ Y SALVO
+💰 *Saldo Pendiente:* ${formatCOP(metrics.totalPagarHoy)}
+----------------------------------------
+Para obtener Paz y Salvo, se requiere cancelar el saldo restante en capital e intereses.
+✅ *Administrador:* Santiago Henao`;
+    } else {
+      concepto = `Cancelación Total / Paz y Salvo Crédito #${credObj ? (credObj.numInterno || 1) : 1}`;
+      document.getElementById('previewReceiptConcepto').textContent = concepto;
+      document.getElementById('previewReceiptSaldoCredito').textContent = '$0 (TOTALMENTE CANCELADO)';
+      document.getElementById('previewReceiptNota').textContent = nota || '¡Felicidades! Crédito cancelado en su totalidad.';
+
+      whatsappMsg = `🎉 *NATILLERA 2026 - CERTIFICADO DE PAZ Y SALVO* 🎉
+----------------------------------------
+👤 *Socio:* ${socio}
+📅 *Fecha:* ${fecha}
+📌 *Crédito:* #${credObj ? (credObj.numInterno || 1) : 1}
+✨ *ESTADO:* PAZ Y SALVO TOTAL ($0 PENDIENTE)
 ----------------------------------------
 Se certifica que el crédito ha sido cancelado en su totalidad en capital e intereses.
 ✅ *Administrador:* Santiago Henao
-¡Felicitaciones y muchas gracias! 🌟`;
+¡Felicitaciones y muchas gracias por tu compromiso! 🌟`;
+    }
   }
 
   // Update text preview box
@@ -1487,6 +1656,17 @@ Se certifica que el crédito ha sido cancelado en su totalidad en capital e inte
  * Downloads receipt card as HD PNG image
  */
 function downloadReceiptImage() {
+  const type = document.getElementById('receiptTypeSelect')?.value;
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect')?.value);
+  const credId = document.getElementById('receiptCreditoSelect')?.value;
+  const credObj = (AppState.data.creditos || []).find(c => c.id === credId);
+  const metrics = credObj ? calculateCreditMetrics(credObj) : null;
+
+  if (type === 'pazysalvo' && metrics && metrics.totalPagarHoy > 0) {
+    alert(`No puedes descargar un Paz y Salvo para ${socio} porque tiene una deuda activa de ${formatCOP(metrics.totalPagarHoy)}. Corrige el tipo a 'Recibo de Abono a Crédito'.`);
+    return;
+  }
+
   const card = document.getElementById('receiptCaptureCard');
   if (!card) return;
 
@@ -1499,7 +1679,6 @@ function downloadReceiptImage() {
     useCORS: true
   }).then(canvas => {
     const link = document.createElement('a');
-    const socio = document.getElementById('receiptSocioSelect')?.value || 'Socio';
     link.download = `Comprobante_Natillera_${socio.replace(/\s+/g, '_')}_${getTodayStr()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
@@ -1511,13 +1690,31 @@ function downloadReceiptImage() {
 }
 
 /**
- * Launches WhatsApp Web / Mobile with the pre-formatted text
+ * Launches WhatsApp Web / Mobile with the pre-formatted text and rule safety validation
  */
 function sendReceiptToWhatsApp() {
+  const type = document.getElementById('receiptTypeSelect')?.value;
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect')?.value);
+  const credId = document.getElementById('receiptCreditoSelect')?.value;
+  const credObj = (AppState.data.creditos || []).find(c => c.id === credId);
+  const metrics = credObj ? calculateCreditMetrics(credObj) : null;
+
+  // Strict business rule enforcement before sending!
+  if (type === 'pazysalvo' && metrics && metrics.totalPagarHoy > 0) {
+    alert(`🚫 ACCIÓN BLOQUEADA: ${socio} tiene un saldo pendiente de ${formatCOP(metrics.totalPagarHoy)}. Por seguridad y transparencia de la Natillera, está PROHIBIDO emitir y enviar un Paz y Salvo con deuda activa.`);
+    return;
+  }
+  if (type === 'abono' && (!credObj || !credId)) {
+    const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === socio);
+    if (userCredits.length === 0) {
+      alert(`⚠️ ACCIÓN BLOQUEADA: ${socio} no registra créditos en el sistema. Para comprobantes de ahorro quincenal, selecciona 'Recibo de Cuota de Ahorro'.`);
+      return;
+    }
+  }
+
   const text = document.getElementById('previewWhatsAppText')?.textContent || '';
   const rawPhone = document.getElementById('receiptTelefonoInput')?.value || '';
   const clean = cleanPhoneNumber(rawPhone);
-  const socio = document.getElementById('receiptSocioSelect')?.value || 'Socio';
 
   let url = '';
   if (clean) {
@@ -1540,27 +1737,80 @@ function copyReceiptText() {
 
 function launchQuickReceipt(type) {
   navigate('comprobantes');
+  unlockReceiptTypeSelect();
   document.getElementById('receiptTypeSelect').value = type;
   updateReceiptGeneratorFields();
 }
 
-function openVoucherForAhorro(socio, cuota, totalAhorrado) {
+function openVoucherForDesembolso(socio, numInt, monto, fecha) {
   navigate('comprobantes');
-  document.getElementById('receiptTypeSelect').value = 'ahorro';
-  updateReceiptGeneratorFields();
-  document.getElementById('receiptSocioSelect').value = socio;
-  document.getElementById('receiptMontoInput').value = cuota;
+  const normSocio = normalizeSocioName(socio);
+  document.getElementById('receiptSocioSelect').value = normSocio;
   onReceiptSocioChange();
+  lockReceiptType('desembolso', `Modo Guiado: Desembolso del Crédito #${numInt} de ${normSocio}`);
+  updateReceiptGeneratorFields();
+  document.getElementById('receiptMontoInput').value = monto;
+  if (fecha) document.getElementById('receiptFechaInput').value = fecha;
+  renderReceiptPreview();
+}
+
+function openVoucherForAbono(socio, credId, montoAbonado, saldoRestante, isPagado = false) {
+  navigate('comprobantes');
+  const normSocio = normalizeSocioName(socio);
+  document.getElementById('receiptSocioSelect').value = normSocio;
+  onReceiptSocioChange();
+
+  const targetType = (isPagado || saldoRestante <= 0) ? 'pazysalvo' : 'abono';
+  const reason = (isPagado || saldoRestante <= 0)
+    ? `Modo Guiado: Paz y Salvo Oficial (Crédito Totalmente Cancelado)`
+    : `Modo Guiado: Abono de ${formatCOP(montoAbonado)} al Crédito`;
+
+  lockReceiptType(targetType, reason);
+  updateReceiptGeneratorFields();
+
+  if (credId) {
+    document.getElementById('receiptCreditoSelect').value = credId;
+  }
+  document.getElementById('receiptMontoInput').value = montoAbonado;
+  renderReceiptPreview();
+}
+
+function openVoucherForAhorro(socio, quincena, cuota) {
+  navigate('comprobantes');
+  const normSocio = normalizeSocioName(socio);
+  document.getElementById('receiptSocioSelect').value = normSocio;
+  onReceiptSocioChange();
+  lockReceiptType('ahorro', `Modo Guiado: Recibo de Aporte Quincenal (${quincena || 'Cuota'}) para ${normSocio}`);
+  updateReceiptGeneratorFields();
+  if (quincena) {
+    const qSel = document.getElementById('receiptQuincenaSelect');
+    if (qSel) qSel.value = quincena;
+  }
+  document.getElementById('receiptMontoInput').value = cuota;
+  renderReceiptPreview();
 }
 
 function openVoucherForCredito(socio, numCred, valor, totalPagar) {
-  navigate('comprobantes');
-  document.getElementById('receiptTypeSelect').value = totalPagar <= 0 ? 'pazysalvo' : 'abono';
-  updateReceiptGeneratorFields();
-  document.getElementById('receiptSocioSelect').value = socio;
-  onReceiptSocioChange();
-  document.getElementById('receiptMontoInput').value = totalPagar > 0 ? totalPagar : valor;
-  renderReceiptPreview();
+  const normSocio = normalizeSocioName(socio);
+  const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === normSocio && (c.numInterno === numCred || !numCred));
+  const credObj = userCredits[0];
+
+  if (credObj) {
+    const metrics = calculateCreditMetrics(credObj);
+    if (metrics.totalPagarHoy <= 0 || credObj.estado === 'PAGADO') {
+      openVoucherForAbono(normSocio, credObj.id, credObj.valorCredito, 0, true);
+    } else if (metrics.totalAbonado === 0) {
+      openVoucherForDesembolso(normSocio, credObj.numInterno || numCred, credObj.valorCredito, credObj.fechaCredito);
+    } else {
+      openVoucherForAbono(normSocio, credObj.id, metrics.totalAbonado, metrics.totalPagarHoy, false);
+    }
+  } else {
+    navigate('comprobantes');
+    unlockReceiptTypeSelect();
+    document.getElementById('receiptSocioSelect').value = normSocio;
+    onReceiptSocioChange();
+    renderReceiptPreview();
+  }
 }
 
 function sendSocioSummaryWhatsApp(nombre, saldoAhorro, saldoDeuda, phone) {
@@ -1625,7 +1875,7 @@ function handleSaveAporteAhorro(e) {
   showToast(`Aporte registrado para ${socio} en ${quincena}`, 'success');
 
   if (openWp) {
-    openVoucherForAhorro(socio, valor, 0);
+    openVoucherForAhorro(socio, quincena, valor);
   }
 }
 
@@ -1673,7 +1923,7 @@ function handleSaveNuevoCredito(e) {
   showToast(`Nuevo crédito creado para ${socio} por ${formatCOP(valor)}`, 'success');
 
   if (openWp) {
-    openVoucherForCredito(socio, numInt, valor, valor);
+    openVoucherForDesembolso(socio, numInt, valor, fecha);
   }
 }
 
@@ -1781,7 +2031,9 @@ function handleSaveAbonoCredito(e) {
   showToast(`Abono por ${formatCOP(total)} registrado para ${socio}`, 'success');
 
   if (openWp) {
-    openVoucherForCredito(socio, numInt, credObj ? credObj.valorCredito : total, 0);
+    const isPagado = credObj ? (credObj.estado === 'PAGADO') : false;
+    const remaining = credObj ? calculateCreditMetrics(credObj).totalPagarHoy : 0;
+    openVoucherForAbono(socio, credId, total, remaining, isPagado);
   }
 }
 
