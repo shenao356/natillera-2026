@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Natillera 2026 | Sistema Inteligente de Ahorro y Créditos</title>
+  
+  <!-- Favicon / Web App Meta -->
+  <meta name="description" content="Sistema de gestión integral para la Natillera 2026: control de ahorros, créditos, liquidaciones automáticas y comprobantes para WhatsApp." />
+  <meta name="theme-color" content="#0b132b" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            },
+            surface: {
+              darker: '#070b19',
+              dark: '#0b132b',
+              card: '#151e3f',
+              border: '#1f2b5b'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- External Libraries -->
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS (Excel Import/Export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- html2canvas (Receipt to HD PNG image) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-surface-darker text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Background Decorative Glowing Blobs -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-600/15 rounded-full blur-3xl animate-pulse-slow"></div>
+    <div class="absolute top-1/3 -right-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 3s;"></div>
+    <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 5s;"></div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-surface-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Title -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('dashboard')">
+        <div class="w-10 h-10 rounded-xl gradient-indigo flex items-center justify-center text-white shadow-lg glow-indigo">
+          <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">NATILLERA</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">2026</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium tracking-wide">Admin: <span id="headerAdminName" class="text-slate-200">Santiago Henao</span></p>
+        </div>
+      </div>
+
+      <!-- Quick Action Badges & Clock -->
+      <div class="hidden md:flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs text-slate-400 px-3 py-1.5 rounded-lg bg-surface-card/60 border border-slate-700/50">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span id="currentDateDisplay">Cargando fecha...</span>
+        </div>
+
+        <button onclick="exportFullExcel()" title="Descargar como Excel" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/30 transition">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+          <span>Exportar Excel</span>
+        </button>
+
+        <button onclick="downloadJsonBackup()" title="Descargar Copia de Seguridad JSON" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600/20 text-brand-300 border border-brand-500/40 hover:bg-brand-600/30 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Respaldo</span>
+        </button>
+      </div>
+
+      <!-- Mobile Quick Menu Button -->
+      <div class="flex md:hidden items-center space-x-2">
+        <button onclick="openModal('modalAbonoRapido')" class="p-2 rounded-lg bg-brand-600 text-white shadow-md text-xs font-bold flex items-center space-x-1">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Abonar</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Layout Container: Sidebar + Content -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+
+    <!-- Desktop Navigation Sidebar -->
+    <aside class="hidden md:block w-64 shrink-0">
+      <nav class="glass-panel p-3 rounded-2xl border border-surface-border sticky top-24 space-y-1.5">
+        
+        <button id="nav-dashboard" onclick="navigate('dashboard')" class="nav-link active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-400"></i>
+          <span>Tablero Principal</span>
+        </button>
+
+        <button id="nav-ahorros" onclick="navigate('ahorros')" class="nav-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="piggy-bank" class="w-5 h-5 text-emerald-400"></i>
+          <span>Ahorros (13 Socios)</span>
+        </button>
+
+        <button id="nav-creditos" onclick="navigate('creditos')" class="nav-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="credit-card" class="w-5 h-5 text-amber-400"></i>
+          <span>Control de Créditos</span>
+        </button>
+
+        <button id="nav-socios" onclick="navigate('socios')" class="nav-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="users" class="w-5 h-5 text-cyan-400"></i>
+          <span>Directorio de Socios</span>
+        </button>
+
+        <button id="nav-comprobantes" onclick="navigate('comprobantes')" class="nav-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="receipt" class="w-5 h-5 text-purple-400"></i>
+          <span class="flex-1 text-left">Comprobantes</span>
+          <span class="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full bg-emerald-500/20 text-emerald-300">WhatsApp</span>
+        </button>
+
+        <div class="pt-3 my-2 border-t border-slate-700/50"></div>
+
+        <button id="nav-config" onclick="navigate('config')" class="nav-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-surface-card/60">
+          <i data-lucide="settings" class="w-5 h-5 text-slate-400"></i>
+          <span>Ajustes & Respaldo</span>
+        </button>
+
+        <!-- Quick Summary Box inside sidebar -->
+        <div class="mt-6 p-4 rounded-xl bg-gradient-to-br from-brand-900/40 to-surface-card/60 border border-brand-500/20 text-xs">
+          <div class="flex items-center justify-between text-slate-400 mb-2 font-medium">
+            <span>Meta Anual Grupo</span>
+            <span id="sidebarMetaPercent" class="font-bold text-emerald-400">92.5%</span>
+          </div>
+          <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden mb-2">
+            <div id="sidebarMetaBar" class="h-2 rounded-full gradient-emerald transition-all duration-700" style="width: 92.5%"></div>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-snug">
+            Ahorrado: <strong id="sidebarAhorradoTotal" class="text-white">$11.540.000</strong> de $12.480.000
+          </p>
+        </div>
+
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 min-w-0 pb-20 md:pb-6">
+
+      <!-- ========================================== -->
+      <!-- VIEW 1: DASHBOARD PRINCIPAL                -->
+      <!-- ========================================== -->
+      <section id="view-dashboard" class="space-y-6">
+        
+        <!-- Welcome Banner & Quick Action Buttons -->
+        <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-indigo-900/90 via-surface-card to-surface-dark border border-brand-500/30 shadow-2xl">
+          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Sistema Financiero en Vivo</span>
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Tablero General Natillera 2026</h1>
+              <p class="text-sm text-slate-300 mt-1 max-w-xl">
+                Control consolidado de ahorros quincenales, préstamos con intereses congelados a la fecha de pago y generación de comprobantes para WhatsApp.
+              </p>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex flex-wrap items-center gap-3">
+              <button onclick="openModal('modalAporteAhorro')" class="px-4 py-2.5 rounded-xl gradient-emerald text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-900/40 hover:opacity-95 transition flex items-center space-x-2">
+                <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+                <span>Nuevo Aporte</span>
+              </button>
+              <button onclick="openModal('modalNuevoCredito')" class="px-4 py-2.5 rounded-xl gradient-indigo text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-900/40 hover:opacity-95 transition flex items-center space-x-2">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Nuevo Crédito</span>
+              </button>
+              <button onclick="openModal('modalAbonoRapido')" class="px-4 py-2.5 rounded-xl gradient-amber text-white text-xs sm:text-sm font-bold shadow-lg shadow-amber-900/40 hover:opacity-95 transition flex items-center space-x-2">
+                <i data-lucide="coins" class="w-4 h-4"></i>
+                <span>Registrar Abono</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Top KPI Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1: Total Ahorrado -->
+          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>TOTAL AHORRADO</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span id="kpiTotalAhorrado" class="text-2xl font-black text-white tracking-tight">$0</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Meta: <strong id="kpiMetaGlobal">$12.480.000</strong></span>
+              <span id="kpiAvanceAhorro" class="font-bold text-emerald-400">0%</span>
+            </div>
+            <div class="mt-2 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div id="kpiAhorroBar" class="gradient-emerald h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Card 2: Capital en Calle (Créditos) -->
+          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>CAPITAL EN LA CALLE</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span id="kpiCapitalEnCalle" class="text-2xl font-black text-amber-400 tracking-tight">$0</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Total Prestado: <strong id="kpiTotalPrestado">$0</strong></span>
+              <span id="kpiCreditosActivosCount" class="font-bold text-amber-300">0 activos</span>
+            </div>
+            <div class="mt-2 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div id="kpiCapitalBar" class="gradient-amber h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Intereses Generados -->
+          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>INTERESES TOTALES</span>
+              <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                <i data-lucide="percent" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span id="kpiInteresesTotales" class="text-2xl font-black text-purple-300 tracking-tight">$0</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Liquidados: <strong id="kpiInteresesLiquidados" class="text-slate-300">$0</strong></span>
+              <span class="text-purple-400">Por cobrar: <strong id="kpiInteresesPorCobrar">$0</strong></span>
+            </div>
+            <div class="mt-2 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div class="gradient-purple h-1.5 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- Card 4: Total Abonos Recaudados -->
+          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>TOTAL RECAUDADO EN ABONOS</span>
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span id="kpiTotalAbonos" class="text-2xl font-black text-cyan-300 tracking-tight">$0</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Por cobrar hoy:</span>
+              <span id="kpiTotalPorCobrarHoy" class="font-bold text-rose-400">$0</span>
+            </div>
+            <div class="mt-2 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div class="gradient-cyan h-1.5 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Chart 1: Progresión Quincenal de Ahorro -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                  <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+                  <span>Recaudación Quincenal de Ahorro</span>
+                </h3>
+                <p class="text-xs text-slate-400">Aportes registrados por quincena (Q01 a Q24)</p>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">24 Quincenas</span>
+            </div>
+            <div class="h-64">
+              <canvas id="chartAhorroQuincenal"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Estado de Cartera de Créditos -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                  <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
+                  <span>Distribución de Cartera de Créditos</span>
+                </h3>
+                <p class="text-xs text-slate-400">Capital prestado vs recuperado vs intereses</p>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">En Vivo</span>
+            </div>
+            <div class="h-64 flex items-center justify-center">
+              <canvas id="chartCreditosCartera"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recent Activity & Quick WhatsApp Vouchers -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Recent Abonos Feed -->
+          <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-surface-border">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                  <i data-lucide="history" class="w-4 h-4 text-brand-400"></i>
+                  <span>Últimos Movimientos de Abonos</span>
+                </h3>
+                <p class="text-xs text-slate-400">Pagos aplicados a capital e intereses de créditos</p>
+              </div>
+              <button onclick="navigate('creditos')" class="text-xs font-semibold text-brand-400 hover:text-brand-300 flex items-center space-x-1">
+                <span>Ver todos</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div id="recentAbonosList" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- WhatsApp Quick Voucher Launcher -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mb-4 shadow-lg glow-emerald">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Comprobantes WhatsApp</h3>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                Genera comprobantes digitales con diseño tipo banco (Nequi / Bancolombia), descárgalos en imagen PNG o envíalos directamente por WhatsApp al socio con un mensaje pre-formateado.
+              </p>
+
+              <div class="mt-4 space-y-2">
+                <button onclick="launchQuickReceipt('ahorro')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-surface-card hover:bg-slate-700/60 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-between transition">
+                  <span class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Recibo de Cuota de Ahorro</span>
+                  </span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+
+                <button onclick="launchQuickReceipt('abono')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-surface-card hover:bg-slate-700/60 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-between transition">
+                  <span class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span>Recibo de Abono a Crédito</span>
+                  </span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+
+                <button onclick="launchQuickReceipt('pazysalvo')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-surface-card hover:bg-slate-700/60 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-between transition">
+                  <span class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <span>Certificado de Paz y Salvo</span>
+                  </span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700/60">
+              <button onclick="navigate('comprobantes')" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-900/40">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Abrir Centro de Comprobantes</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 2: CONTROL DE AHORROS                 -->
+      <!-- ========================================== -->
+      <section id="view-ahorros" class="hidden space-y-6">
+        
+        <!-- Header banner & Sub-tabs -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-5 rounded-2xl border border-surface-border">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+              <i data-lucide="piggy-bank" class="w-6 h-6 text-emerald-400"></i>
+              <span>Control de Ahorros Natillera 2026</span>
+            </h2>
+            <p class="text-xs text-slate-300 mt-1">
+              Registro quincenal de cuotas, seguimiento de metas individuales y extractos por participante.
+            </p>
+          </div>
+
+          <!-- View Switcher: Socios vs Matriz Quincenal -->
+          <div class="flex items-center p-1 rounded-xl bg-surface-dark border border-slate-700">
+            <button id="tabBtnAhorradores" onclick="switchAhorroTab('ahorradores')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white">
+              Socios Ahorradores (13)
+            </button>
+            <button id="tabBtnMatriz" onclick="switchAhorroTab('matriz')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+              Matriz Quincenal (24Q)
+            </button>
+          </div>
+        </div>
+
+        <!-- Sub-View A: Socios Ahorradores Cards Grid -->
+        <div id="subviewAhorradores" class="space-y-4">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="relative w-full sm:w-72">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="searchAhorrador" placeholder="Buscar ahorrador..." oninput="filterAhorradores()" class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-card border border-slate-700 text-xs text-white focus:outline-none focus:border-brand-500 transition" />
+            </div>
+
+            <button onclick="openModal('modalAporteAhorro')" class="w-full sm:w-auto px-4 py-2 rounded-xl gradient-emerald text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-md">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Registrar Pago de Cuota</span>
+            </button>
+          </div>
+
+          <!-- Cards container -->
+          <div id="ahorradoresGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Sub-View B: Matriz Quincenal Interactiva -->
+        <div id="subviewMatriz" class="hidden space-y-4">
+          <div class="glass-panel p-4 rounded-2xl border border-surface-border flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+              <label for="selectQuincenaMatriz" class="text-xs font-bold text-slate-300">Seleccionar Quincena:</label>
+              <select id="selectQuincenaMatriz" onchange="renderMatrizTable()" class="px-3 py-1.5 rounded-xl bg-surface-card border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-500 font-semibold">
+                <!-- Filled via JS -->
+              </select>
+            </div>
+            
+            <div class="text-xs text-slate-400">
+              Total Recaudado en esta fecha: <strong id="matrizFechaTotal" class="text-emerald-400 font-black text-sm">$0</strong>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="glass-panel rounded-2xl border border-surface-border overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-surface-card/80 text-slate-300 uppercase tracking-wider text-[11px] font-bold border-b border-surface-border">
+                  <tr>
+                    <th class="p-3.5">#</th>
+                    <th class="p-3.5">Ahorrador</th>
+                    <th class="p-3.5">Modalidad</th>
+                    <th class="p-3.5">Cuota Base</th>
+                    <th class="p-3.5">Aporte Quincena</th>
+                    <th class="p-3.5">Forma de Pago</th>
+                    <th class="p-3.5">Estado</th>
+                    <th class="p-3.5 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="matrizTableBody" class="divide-y divide-slate-800/80">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 3: CONTROL DE CRÉDITOS Y ABONOS       -->
+      <!-- ========================================== -->
+      <section id="view-creditos" class="hidden space-y-6">
+        
+        <!-- Header with Metrics & Actions -->
+        <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                <i data-lucide="credit-card" class="w-6 h-6 text-amber-400"></i>
+                <span>Gestión de Créditos y Liquidación</span>
+              </h2>
+              <p class="text-xs text-slate-300 mt-1">
+                Cálculo de intereses al día de hoy, congelamiento a fecha de pago, y registro inteligente de abonos.
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <button onclick="openModal('modalNuevoCredito')" class="px-4 py-2 rounded-xl gradient-indigo text-white text-xs font-bold flex items-center space-x-2 shadow-md">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Nuevo Crédito</span>
+              </button>
+              <button onclick="openModal('modalAbonoRapido')" class="px-4 py-2 rounded-xl gradient-amber text-white text-xs font-bold flex items-center space-x-2 shadow-md">
+                <i data-lucide="coins" class="w-4 h-4"></i>
+                <span>Abonar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-metrics line -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-700/60 text-xs">
+            <div class="p-2.5 rounded-xl bg-surface-card/60">
+              <span class="text-slate-400 block text-[11px]">Total Colocado</span>
+              <strong id="credTotalColocado" class="text-white text-sm font-bold">$0</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card/60">
+              <span class="text-slate-400 block text-[11px]">Capital en Calle</span>
+              <strong id="credCapitalEnCalle" class="text-amber-400 text-sm font-bold">$0</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card/60">
+              <span class="text-slate-400 block text-[11px]">Intereses Liquidados</span>
+              <strong id="credInteresesLiquidados" class="text-purple-300 text-sm font-bold">$0</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card/60">
+              <span class="text-slate-400 block text-[11px]">Por Cobrar Hoy</span>
+              <strong id="credTotalPorCobrar" class="text-rose-400 text-sm font-bold">$0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <button id="filterCredAll" onclick="setCreditoFilter('ALL')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-brand-600 text-white">
+              Todos
+            </button>
+            <button id="filterCredVigente" onclick="setCreditoFilter('DEUDA')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-surface-card text-slate-300 hover:text-white">
+              Con Deuda (Activos)
+            </button>
+            <button id="filterCredPagado" onclick="setCreditoFilter('PAGADO')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-surface-card text-slate-300 hover:text-white">
+              Pagados / Paz y Salvo
+            </button>
+          </div>
+
+          <div class="relative w-full sm:w-64">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="searchCredito" placeholder="Buscar por socio..." oninput="renderCreditosList()" class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-card border border-slate-700 text-xs text-white focus:outline-none focus:border-brand-500 transition" />
+          </div>
+        </div>
+
+        <!-- Creditos List Cards -->
+        <div id="creditosContainer" class="space-y-4">
+          <!-- Rendered via JS -->
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 4: DIRECTORIO DE SOCIOS               -->
+      <!-- ========================================== -->
+      <section id="view-socios" class="hidden space-y-6">
+        <div class="glass-panel p-5 rounded-2xl border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+              <i data-lucide="users" class="w-6 h-6 text-cyan-400"></i>
+              <span>Directorio Integral de Socios</span>
+            </h2>
+            <p class="text-xs text-slate-300 mt-1">
+              Configura los números de WhatsApp para envío de comprobantes con 1 solo clic y consulta extractos consolidados.
+            </p>
+          </div>
+
+          <button onclick="openModal('modalNuevoSocio')" class="px-4 py-2 rounded-xl gradient-cyan text-white text-xs font-bold flex items-center space-x-2 shadow-md">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Nuevo Socio</span>
+          </button>
+        </div>
+
+        <!-- Socios Directory Table / Cards -->
+        <div id="sociosContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 5: CENTRO DE COMPROBANTES WHATSAPP    -->
+      <!-- ========================================== -->
+      <section id="view-comprobantes" class="hidden space-y-6">
+        
+        <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i data-lucide="receipt" class="w-6 h-6 text-purple-400"></i>
+            <span>Centro de Comprobantes para WhatsApp</span>
+          </h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Diseña, previsualiza y envía comprobantes oficiales de pago por WhatsApp en formato de imagen HD y texto formateado.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Generator Form (5 cols) -->
+          <div class="lg:col-span-5 glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+              <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i>
+              <span>Configuración del Comprobante</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Tipo de Comprobante</label>
+                <select id="receiptTypeSelect" onchange="updateReceiptGeneratorFields()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <option value="ahorro">💰 Recibo de Cuota de Ahorro</option>
+                  <option value="abono">💳 Recibo de Abono a Crédito</option>
+                  <option value="desembolso">🤝 Constancia de Desembolso de Préstamo</option>
+                  <option value="pazysalvo">🌟 Certificado de Paz y Salvo</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Seleccionar Socio</label>
+                <select id="receiptSocioSelect" onchange="onReceiptSocioChange()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <!-- Filled via JS -->
+                </select>
+              </div>
+
+              <!-- Dynamic Field: Quincena (For Ahorro) -->
+              <div id="receiptGroupQuincena">
+                <label class="block font-semibold text-slate-300 mb-1">Quincena / Periodo</label>
+                <select id="receiptQuincenaSelect" onchange="renderReceiptPreview()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <!-- Filled via JS -->
+                </select>
+              </div>
+
+              <!-- Dynamic Field: Crédito (For Abono) -->
+              <div id="receiptGroupCredito" class="hidden">
+                <label class="block font-semibold text-slate-300 mb-1">Crédito Asociado</label>
+                <select id="receiptCreditoSelect" onchange="onReceiptCreditoChange()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <!-- Filled via JS -->
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">Monto ($)</label>
+                  <input type="number" id="receiptMontoInput" oninput="renderReceiptPreview()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" placeholder="Ej: 40000" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">Fecha</label>
+                  <input type="date" id="receiptFechaInput" onchange="renderReceiptPreview()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Medio de Pago</label>
+                <select id="receiptMedioSelect" onchange="renderReceiptPreview()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                  <option value="Nequi">Nequi</option>
+                  <option value="Bancolombia">Bancolombia</option>
+                  <option value="Daviplata">Daviplata</option>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Adelantada">Adelantada</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Teléfono WhatsApp del Socio (Opcional)</label>
+                <input type="tel" id="receiptTelefonoInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                <p class="text-[10px] text-slate-400 mt-1">Incluye código de país (ejemplo: 57 para Colombia).</p>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Nota u Observación (Opcional)</label>
+                <textarea id="receiptNotaInput" rows="2" oninput="renderReceiptPreview()" placeholder="Ej: Agradecemos tu puntualidad y compromiso..." class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500"></textarea>
+              </div>
+
+            </div>
+
+            <!-- Action buttons -->
+            <div class="pt-4 border-t border-slate-700/60 space-y-2">
+              <button onclick="sendReceiptToWhatsApp()" class="w-full py-3 rounded-xl gradient-emerald hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 transition">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Enviar por WhatsApp</span>
+              </button>
+
+              <button onclick="downloadReceiptImage()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center space-x-2 transition shadow-md">
+                <i data-lucide="image" class="w-4 h-4"></i>
+                <span>Descargar Tarjeta Imagen (PNG)</span>
+              </button>
+
+              <button onclick="copyReceiptText()" class="w-full py-2 rounded-xl bg-surface-card hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center justify-center space-x-2 transition border border-slate-700">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copiar Mensaje de Texto</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Receipt Visual Preview (7 cols) -->
+          <div class="lg:col-span-7 flex flex-col items-center justify-start space-y-4">
+            <div class="w-full flex items-center justify-between text-xs text-slate-400">
+              <span class="font-bold text-white flex items-center space-x-1.5">
+                <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                <span>Vista Previa de la Tarjeta Digital</span>
+              </span>
+              <span class="text-[11px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">Formato HD 1080p</span>
+            </div>
+
+            <!-- The Printable/Capture Receipt Node -->
+            <div class="w-full flex justify-center">
+              <div id="receiptCaptureCard" class="receipt-container w-full max-w-md p-6 font-sans">
+                <!-- Header Card Banner -->
+                <div class="receipt-header-banner -m-6 mb-6 p-6 rounded-t-2xl relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-md">
+                        N
+                      </div>
+                      <div>
+                        <h4 class="font-extrabold text-base tracking-tight text-white leading-tight">NATILLERA 2026</h4>
+                        <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Comprobante Oficial</p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span id="previewReceiptFolio" class="text-xs font-mono font-bold text-slate-300">#REC-0001</span>
+                      <p id="previewReceiptFechaHora" class="text-[10px] text-slate-400 font-mono">2026-10-02</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Main Content Body -->
+                <div class="space-y-4">
+                  <div class="text-center py-2 border-b border-slate-100">
+                    <span id="previewReceiptTitleBadge" class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide bg-emerald-100 text-emerald-800">
+                      APORTE DE AHORRO
+                    </span>
+                    <div class="mt-3">
+                      <span class="text-xs text-slate-500 font-medium block">Monto Transacción</span>
+                      <h2 id="previewReceiptMonto" class="text-3xl font-black text-slate-900 tracking-tight">$40.000</h2>
+                    </div>
+                  </div>
+
+                  <!-- Details Table -->
+                  <div class="space-y-2 text-xs text-slate-600">
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                      <span class="text-slate-400">Socio / Titular:</span>
+                      <strong id="previewReceiptSocio" class="text-slate-900 font-bold">Caro Ríos</strong>
+                    </div>
+
+                    <div id="previewRowConcepto" class="flex justify-between py-1 border-b border-slate-100">
+                      <span class="text-slate-400">Concepto / Periodo:</span>
+                      <strong id="previewReceiptConcepto" class="text-slate-900">Quincena Q01 (Ene-15)</strong>
+                    </div>
+
+                    <div class="flex justify-between py-1 border-b border-slate-100">
+                      <span class="text-slate-400">Método de Pago:</span>
+                      <strong id="previewReceiptMedio" class="text-slate-900">Transferencia Bancaria</strong>
+                    </div>
+
+                    <!-- Dynamic Row: Ahorro Acumulado -->
+                    <div id="previewRowAhorroAcum" class="flex justify-between py-1 border-b border-slate-100">
+                      <span class="text-slate-400">Saldo Ahorrado a la Fecha:</span>
+                      <strong id="previewReceiptSaldoAhorro" class="text-emerald-700 font-black">$680.000</strong>
+                    </div>
+
+                    <!-- Dynamic Row: Saldo Restante Crédito (if applicable) -->
+                    <div id="previewRowSaldoCredito" class="hidden flex justify-between py-1 border-b border-slate-100">
+                      <span class="text-slate-400">Saldo Restante Crédito:</span>
+                      <strong id="previewReceiptSaldoCredito" class="text-amber-700 font-black">$0</strong>
+                    </div>
+
+                    <div id="previewRowNota" class="py-1 text-[11px] text-slate-500 italic bg-slate-50 p-2 rounded-lg">
+                      "<span id="previewReceiptNota">¡Gracias por tu ahorro puntual!</span>"
+                    </div>
+                  </div>
+
+                  <!-- Security Badge / Footer Sign -->
+                  <div class="pt-3 border-t border-dashed border-slate-300 flex items-center justify-between text-[10px] text-slate-400">
+                    <div>
+                      <p class="font-bold text-slate-700">Santiago Henao</p>
+                      <p>Administrador Natillera</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="inline-flex items-center space-x-1 text-emerald-600 font-bold">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        <span>Verificado</span>
+                      </span>
+                      <p class="font-mono text-[9px] text-slate-400">NATILLERA-VERIFIED</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- WhatsApp Message Preview Box -->
+            <div class="w-full max-w-md p-4 rounded-xl bg-surface-card border border-slate-700 text-xs">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="font-bold text-white flex items-center space-x-1.5">
+                  <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  <span>Texto para WhatsApp</span>
+                </span>
+                <span class="text-[10px] text-slate-400">Formato Automático</span>
+              </div>
+              <pre id="previewWhatsAppText" class="whitespace-pre-wrap font-sans text-slate-300 text-xs bg-surface-darker/60 p-3 rounded-lg border border-slate-800 leading-relaxed"></pre>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 6: AJUSTES, RESPALDO & GITHUB         -->
+      <!-- ========================================== -->
+      <section id="view-config" class="hidden space-y-6">
+        
+        <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i data-lucide="settings" class="w-6 h-6 text-slate-400"></i>
+            <span>Ajustes del Sistema & Respaldo de Datos</span>
+          </h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Administración del grupo, vinculación a GitHub, copias de seguridad y exportación en Excel.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Box 1: Datos de la Natillera -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+              <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i>
+              <span>Parámetros Generales</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Nombre de la Natillera</label>
+                <input type="text" id="configNombreInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Nombre del Administrador</label>
+                <input type="text" id="configAdminInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Teléfono WhatsApp del Administrador</label>
+                <input type="tel" id="configAdminPhoneInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Tasa de Interés Mensual por Defecto (%)</label>
+                <input type="number" step="0.001" id="configTasaInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                <p class="text-[10px] text-slate-400 mt-1">0.005 corresponde al 0.5% mensual (tasa configurada en tu Excel).</p>
+              </div>
+
+              <button onclick="saveGeneralConfig()" class="w-full py-2.5 rounded-xl gradient-indigo text-white font-bold text-xs shadow-md hover:opacity-95 transition">
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+
+          <!-- Box 2: Respaldo, Excel & GitHub Cloud -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+              <i data-lucide="cloud" class="w-4 h-4 text-emerald-400"></i>
+              <span>GitHub Cloud & Copias de Seguridad</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <!-- GitHub Info -->
+              <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-700/80">
+                <div class="flex items-center space-x-2 text-slate-300 font-semibold mb-1">
+                  <i data-lucide="github" class="w-4 h-4 text-white"></i>
+                  <span>Usuario GitHub: <strong class="text-emerald-400">shenao356</strong></span>
+                </div>
+                <p class="text-[11px] text-slate-400">
+                  Repositorio listo para desplegar en GitHub Pages. Todos los archivos están preparados para funcionar online 24/7 sin pagar servidores.
+                </p>
+              </div>
+
+              <div class="pt-2 space-y-2">
+                <button onclick="exportFullExcel()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center space-x-2 transition shadow-md">
+                  <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                  <span>Descargar Todos los Datos en Excel (.xlsx)</span>
+                </button>
+
+                <button onclick="downloadJsonBackup()" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold flex items-center justify-center space-x-2 transition shadow-md">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Descargar Copia de Seguridad JSON</span>
+                </button>
+
+                <div>
+                  <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importJsonBackup(event)" />
+                  <button onclick="document.getElementById('importJsonInput').click()" class="w-full py-2.5 rounded-xl bg-surface-card hover:bg-slate-700 text-slate-300 font-semibold flex items-center justify-center space-x-2 transition border border-slate-700">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    <span>Restaurar Copia de Seguridad JSON</span>
+                  </button>
+                </div>
+
+                <button onclick="confirmResetFactory()" class="w-full py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 font-semibold flex items-center justify-center space-x-2 transition border border-rose-800/50">
+                  <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                  <span>Restablecer Datos Originales de Excel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-surface-border z-40 px-2 py-2 flex items-center justify-around">
+    <button onclick="navigate('dashboard')" id="mobnav-dashboard" class="flex flex-col items-center text-indigo-400">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">Inicio</span>
+    </button>
+    <button onclick="navigate('ahorros')" id="mobnav-ahorros" class="flex flex-col items-center text-slate-400 hover:text-white">
+      <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">Ahorros</span>
+    </button>
+    <button onclick="navigate('creditos')" id="mobnav-creditos" class="flex flex-col items-center text-slate-400 hover:text-white">
+      <i data-lucide="credit-card" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">Créditos</span>
+    </button>
+    <button onclick="navigate('comprobantes')" id="mobnav-comprobantes" class="flex flex-col items-center text-slate-400 hover:text-white">
+      <i data-lucide="receipt" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">WhatsApp</span>
+    </button>
+    <button onclick="navigate('config')" id="mobnav-config" class="flex flex-col items-center text-slate-400 hover:text-white">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">Ajustes</span>
+    </button>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- MODALS SYSTEM                              -->
+  <!-- ========================================== -->
+
+  <!-- Modal 1: Registrar Aporte de Ahorro -->
+  <div id="modalAporteAhorro" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="piggy-bank" class="w-5 h-5 text-emerald-400"></i>
+          <span>Registrar Aporte de Ahorro</span>
+        </h3>
+        <button onclick="closeModal('modalAporteAhorro')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formAporteAhorro" onsubmit="handleSaveAporteAhorro(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Ahorrador</label>
+          <select id="aporteSocioSelect" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+            <!-- Filled via JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Quincena</label>
+            <select id="aporteQuincenaSelect" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+              <!-- Filled via JS -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Valor Aporte ($)</label>
+            <input type="number" id="aporteValorInput" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" placeholder="Ej: 40000" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Forma de Pago</label>
+          <select id="aporteFormaPagoSelect" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+            <option value="TRANSFERENCIA">Transferencia</option>
+            <option value="NEQUI">Nequi</option>
+            <option value="BANCOLOMBIA">Bancolombia</option>
+            <option value="EFECTIVO">Efectivo</option>
+            <option value="ADELANTADA">Adelantada (Monto en cero)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" id="aporteCheckWhatsApp" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 bg-surface-card border-slate-700" />
+          <label for="aporteCheckWhatsApp" class="text-slate-300 font-medium">Generar comprobante para WhatsApp al guardar</label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalAporteAhorro')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl gradient-emerald text-white font-bold shadow-md">Guardar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Registrar Nuevo Crédito -->
+  <div id="modalNuevoCredito" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-400"></i>
+          <span>Registrar Nuevo Crédito</span>
+        </h3>
+        <button onclick="closeModal('modalNuevoCredito')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formNuevoCredito" onsubmit="handleSaveNuevoCredito(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Socio / Deudor</label>
+          <select id="nuevoCreditoSocioSelect" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+            <!-- Filled via JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Monto del Préstamo ($)</label>
+            <input type="number" id="nuevoCreditoMontoInput" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" placeholder="Ej: 500000" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Fecha de Desembolso</label>
+            <input type="date" id="nuevoCreditoFechaInput" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Tasa Mes (Decimal)</label>
+            <input type="number" step="0.001" id="nuevoCreditoTasaInput" value="0.005" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+            <span class="text-[10px] text-slate-400">0.005 = 0.5% mensual</span>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">N° Crédito del Socio</label>
+            <input type="number" id="nuevoCreditoNumInternoInput" value="1" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" id="nuevoCreditoCheckWhatsApp" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-surface-card border-slate-700" />
+          <label for="nuevoCreditoCheckWhatsApp" class="text-slate-300 font-medium">Generar comprobante de desembolso para WhatsApp</label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalNuevoCredito')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl gradient-indigo text-white font-bold shadow-md">Crear Crédito</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Registrar Abono a Crédito -->
+  <div id="modalAbonoRapido" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="coins" class="w-5 h-5 text-amber-400"></i>
+          <span>Registrar Abono a Crédito</span>
+        </h3>
+        <button onclick="closeModal('modalAbonoRapido')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formAbonoCredito" onsubmit="handleSaveAbonoCredito(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Seleccionar Socio</label>
+          <select id="abonoSocioSelect" onchange="onAbonoSocioChange()" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+            <!-- Filled via JS -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Crédito a Abonar</label>
+          <select id="abonoCreditoSelect" onchange="onAbonoCreditoSelectChange()" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+            <!-- Filled via JS -->
+          </select>
+        </div>
+
+        <!-- Credit Summary Box -->
+        <div id="abonoCreditoInfoBox" class="p-3 rounded-xl bg-surface-dark border border-slate-700/70 text-[11px] space-y-1 text-slate-300">
+          <div class="flex justify-between">
+            <span>Saldo Capital:</span>
+            <strong id="abonoInfoSaldoCapital" class="text-white">$0</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Intereses Acumulados:</span>
+            <strong id="abonoInfoSaldoInteres" class="text-purple-300">$0</strong>
+          </div>
+          <div class="flex justify-between font-bold pt-1 border-t border-slate-800">
+            <span>Total a Liquidar Hoy:</span>
+            <strong id="abonoInfoTotalHoy" class="text-rose-400 text-xs">$0</strong>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Total Pagado ($)</label>
+            <input type="number" id="abonoTotalInput" oninput="autoDistributeAbono()" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" placeholder="Ej: 150000" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Fecha del Pago</label>
+            <input type="date" id="abonoFechaInput" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <!-- Smart Distribution Preview -->
+        <div class="grid grid-cols-2 gap-3 p-2.5 rounded-xl bg-surface-card/60 border border-slate-700/60">
+          <div>
+            <label class="block text-[10px] text-slate-400">Abono a Intereses</label>
+            <input type="number" id="abonoInteresInput" class="w-full px-2 py-1 rounded-lg bg-surface-dark border border-slate-700 text-purple-300 font-bold" />
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400">Abono a Capital</label>
+            <input type="number" id="abonoCapitalInput" class="w-full px-2 py-1 rounded-lg bg-surface-dark border border-slate-700 text-emerald-300 font-bold" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Medio de Pago / Referencia</label>
+          <input type="text" id="abonoMedioInput" placeholder="WhatsApp, Nequi, Transferencia..." class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" id="abonoCheckWhatsApp" checked class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 bg-surface-card border-slate-700" />
+          <label for="abonoCheckWhatsApp" class="text-slate-300 font-medium">Abrir comprobante para WhatsApp al registrar</label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalAbonoRapido')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl gradient-amber text-white font-bold shadow-md">Registrar Abono</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Liquidar / Congelar Crédito -->
+  <div id="modalLiquidarCredito" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="lock" class="w-5 h-5 text-rose-400"></i>
+          <span>Congelar / Liquidar Crédito</span>
+        </h3>
+        <button onclick="closeModal('modalLiquidarCredito')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-300 space-y-3">
+        <p>
+          Al liquidar el crédito, los intereses se <strong>congelan a la fecha exacta de pago</strong> para que no sigan acumulando cobros diarios, tal como funcionaba en tu archivo Excel.
+        </p>
+        
+        <input type="hidden" id="liquidarCreditoIdInput" />
+        
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Fecha de Liquidación / Pago Final</label>
+          <input type="date" id="liquidarFechaInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-rose-500" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalLiquidarCredito')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+          <button onclick="confirmLiquidarCredito()" class="px-5 py-2 rounded-xl gradient-rose text-white font-bold shadow-md">Confirmar y Congelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Nuevo Socio -->
+  <div id="modalNuevoSocio" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-cyan-400"></i>
+          <span>Registrar Nuevo Socio</span>
+        </h3>
+        <button onclick="closeModal('modalNuevoSocio')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formNuevoSocio" onsubmit="handleSaveNuevoSocio(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Nombre Completo</label>
+          <input type="text" id="nuevoSocioNombreInput" required placeholder="Ej: CARLOS MENDOZA" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-cyan-500 uppercase" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Teléfono WhatsApp</label>
+          <input type="tel" id="nuevoSocioTelefonoInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-cyan-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Modalidad de Ahorro</label>
+            <select id="nuevoSocioModalidadSelect" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-cyan-500">
+              <option value="Quincenal">Quincenal</option>
+              <option value="Mensual">Mensual</option>
+              <option value="Bimestral / Adelantada">Bimestral / Adelantada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Cuota Base ($)</label>
+            <input type="number" id="nuevoSocioCuotaInput" value="40000" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-cyan-500" />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalNuevoSocio')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl gradient-cyan text-white font-bold shadow-md">Guardar Socio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-20 md:bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- Core Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
