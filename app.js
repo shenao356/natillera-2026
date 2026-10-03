@@ -22,10 +22,17 @@ let AppState = {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   initStorage();
+  applyDashboardViewsPreferences();
   updateLiveDate();
   populateDropdowns();
   setupNavigation();
-  refreshAllViews();
+
+  // If a default start view was customized, open it
+  if (AppState.data && AppState.data.config && AppState.data.config.defaultView) {
+    navigate(AppState.data.config.defaultView);
+  } else {
+    refreshAllViews();
+  }
   lucide.createIcons();
 });
 
@@ -83,6 +90,16 @@ function getTodayStr() {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function cleanPhoneNumber(phone) {
+  if (!phone) return '';
+  let p = String(phone).replace(/[^0-9]/g, '');
+  // If user entered 10 digits starting with 3 (standard Colombia: 3001234567), prepend 57
+  if (p.length === 10 && p.startsWith('3')) {
+    p = '57' + p;
+  }
+  return p;
 }
 
 /**
@@ -479,6 +496,7 @@ function renderAhorradoresCards() {
     const pct = Math.min(200, (a.totalAhorrado / meta) * 100);
     const initials = a.nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
     const isCompleted = a.totalAhorrado >= meta;
+    const cleanTel = cleanPhoneNumber(a.telefono || '');
 
     return `
       <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4">
@@ -488,8 +506,8 @@ function renderAhorradoresCards() {
               <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
                 ${initials}
               </div>
-              <div>
-                <h4 class="text-sm font-bold text-white">${escapeHtml(a.nombre)}</h4>
+              <div class="min-w-0">
+                <h4 class="text-sm font-bold text-white truncate">${escapeHtml(a.nombre)}</h4>
                 <p class="text-[11px] text-slate-400">${escapeHtml(a.modalidad)}</p>
               </div>
             </div>
@@ -499,7 +517,28 @@ function renderAhorradoresCards() {
             }
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-700/60 grid grid-cols-2 gap-2 text-xs">
+          <!-- WhatsApp Badge & Quick Edit -->
+          <div class="mt-3 p-2 rounded-xl bg-surface-dark/70 border border-slate-700/60 flex items-center justify-between text-[11px]">
+            <div class="flex items-center space-x-1.5 truncate">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+              <span class="font-mono text-slate-300 font-semibold truncate">
+                ${cleanTel ? `+${cleanTel}` : '<span class="text-slate-500 italic font-sans font-normal">Sin WhatsApp</span>'}
+              </span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              ${cleanTel ? `
+                <a href="https://api.whatsapp.com/send?phone=${cleanTel}" target="_blank" title="Abrir chat de WhatsApp" class="p-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 transition">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                </a>
+              ` : ''}
+              <button onclick="openModalEditarAhorrador(${a.id})" class="px-2 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center space-x-1 text-[10px]">
+                <i data-lucide="edit-2" class="w-2.5 h-2.5"></i>
+                <span>Editar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-slate-700/60 grid grid-cols-2 gap-2 text-xs">
             <div>
               <span class="text-slate-400 text-[10px]">Total Ahorrado</span>
               <strong class="text-emerald-400 block text-base font-black">${formatCOP(a.totalAhorrado)}</strong>
@@ -944,11 +983,67 @@ function updateReceiptGeneratorFields() {
 function onReceiptSocioChange() {
   const socio = document.getElementById('receiptSocioSelect').value;
   const user = (AppState.data.ahorradores || []).find(a => a.nombre.toLowerCase() === socio.toLowerCase());
-  if (user && user.telefono) {
-    document.getElementById('receiptTelefonoInput').value = user.telefono;
+  const phoneInput = document.getElementById('receiptTelefonoInput');
+  const userPhone = user && user.telefono ? user.telefono : '';
+
+  if (phoneInput) {
+    phoneInput.value = userPhone;
   }
+  updateWhatsAppStatusBadge(userPhone);
   updateCreditosDropdownForReceipt();
   renderReceiptPreview();
+}
+
+function onReceiptPhoneInput() {
+  const phone = document.getElementById('receiptTelefonoInput')?.value || '';
+  updateWhatsAppStatusBadge(phone);
+}
+
+function updateWhatsAppStatusBadge(phone) {
+  const clean = cleanPhoneNumber(phone);
+  const badge = document.getElementById('receiptWhatsAppStatusBadge');
+  const text = document.getElementById('receiptWhatsAppStatusText');
+  const socio = document.getElementById('receiptSocioSelect')?.value || 'Socio';
+
+  if (!badge || !text) return;
+
+  if (clean) {
+    badge.className = 'mt-1.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 flex items-center justify-between';
+    text.innerHTML = `🟢 Listo para chat directo con <strong>${escapeHtml(socio)}</strong> (+${clean})`;
+  } else {
+    badge.className = 'mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between';
+    text.innerHTML = `⚠️ Sin teléfono guardado. Escríbelo y dale clic a 'Guardar en su perfil'`;
+  }
+}
+
+function quickEditCurrentSocioPhone() {
+  const socio = document.getElementById('receiptSocioSelect')?.value;
+  const rawTel = document.getElementById('receiptTelefonoInput')?.value.trim();
+  const cleanTel = cleanPhoneNumber(rawTel);
+
+  if (!cleanTel) {
+    alert('Ingresa primero un número de teléfono válido.');
+    return;
+  }
+
+  let user = (AppState.data.ahorradores || []).find(a => a.nombre.toLowerCase() === socio.toLowerCase());
+  if (user) {
+    user.telefono = cleanTel;
+  } else {
+    AppState.data.ahorradores.push({
+      id: (AppState.data.ahorradores.length + 1),
+      nombre: socio,
+      modalidad: 'Quincenal',
+      cuotaBase: 40000,
+      metaAnual: 960000,
+      telefono: cleanTel
+    });
+  }
+
+  saveState();
+  updateWhatsAppStatusBadge(cleanTel);
+  refreshAllViews();
+  showToast(`WhatsApp +${cleanTel} guardado para ${socio}`, 'success');
 }
 
 function updateCreditosDropdownForReceipt() {
@@ -1111,20 +1206,20 @@ function downloadReceiptImage() {
  */
 function sendReceiptToWhatsApp() {
   const text = document.getElementById('previewWhatsAppText')?.textContent || '';
-  let phone = document.getElementById('receiptTelefonoInput')?.value || '';
-  
-  // Clean phone number
-  phone = phone.replace(/[^0-9]/g, '');
+  const rawPhone = document.getElementById('receiptTelefonoInput')?.value || '';
+  const clean = cleanPhoneNumber(rawPhone);
+  const socio = document.getElementById('receiptSocioSelect')?.value || 'Socio';
 
   let url = '';
-  if (phone) {
-    url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`;
+  if (clean) {
+    url = `https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+    showToast(`Abriendo chat directo con ${socio} (+${clean})...`, 'success');
   } else {
     url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+    showToast('Abriendo WhatsApp para elegir contacto...', 'info');
   }
-
-  window.open(url, '_blank');
-  showToast('Abriendo WhatsApp...', 'success');
 }
 
 function copyReceiptText() {
@@ -1160,7 +1255,10 @@ function openVoucherForCredito(socio, numCred, valor, totalPagar) {
 }
 
 function sendSocioSummaryWhatsApp(nombre, saldoAhorro, saldoDeuda, phone) {
-  const msg = `📊 *NATILLERA 2026 - ESTADO DE CUENTA INDIVIDUAL* 📊
+  const adminName = (AppState.data && AppState.data.config && AppState.data.config.administrador) || 'Santiago Henao';
+  const natilleraName = (AppState.data && AppState.data.config && AppState.data.config.nombre) || 'NATILLERA 2026';
+
+  const msg = `📊 *${natilleraName} - ESTADO DE CUENTA INDIVIDUAL* 📊
 ----------------------------------------
 👤 *Socio:* ${nombre}
 📅 *Fecha de Corte:* ${getTodayStr()}
@@ -1168,15 +1266,16 @@ function sendSocioSummaryWhatsApp(nombre, saldoAhorro, saldoDeuda, phone) {
 💰 *Total Ahorrado:* ${formatCOP(saldoAhorro)}
 💳 *Saldo Créditos:* ${formatCOP(saldoDeuda)}
 ----------------------------------------
-✅ *Administrador:* Santiago Henao
-Cualquier duda o aclaración con gusto te atenderemos. ¡Gracias! 🌟`;
+✅ *Administrador:* ${adminName}
+Cualquier duda o aclaración con gusto te atenderemos. ¡Muchas gracias! 🌟`;
 
-  let cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  let cleanPhone = cleanPhoneNumber(phone);
   let url = cleanPhone 
     ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`
     : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
 
   window.open(url, '_blank');
+  showToast(cleanPhone ? `Abriendo chat de WhatsApp con ${nombre} (+${cleanPhone})...` : 'Abriendo WhatsApp...', 'success');
 }
 
 // ==========================================
@@ -1445,31 +1544,211 @@ function handleSaveNuevoSocio(e) {
 // VIEW 6: CONFIGURACIÓN, EXCEL Y RESPALDO
 // ==========================================
 
+// Modal 6: Editar Ahorrador / Socio
+function openModalEditarAhorrador(id) {
+  const ahorrador = (AppState.data.ahorradores || []).find(a => a.id === id);
+  if (!ahorrador) return;
+
+  document.getElementById('editAhorradorId').value = ahorrador.id;
+  document.getElementById('editAhorradorOldName').value = ahorrador.nombre;
+  document.getElementById('editAhorradorNombre').value = ahorrador.nombre;
+  document.getElementById('editAhorradorTelefono').value = ahorrador.telefono || '';
+  document.getElementById('editAhorradorModalidad').value = ahorrador.modalidad || 'Quincenal';
+  document.getElementById('editAhorradorCuota').value = ahorrador.cuotaBase || 40000;
+  document.getElementById('editAhorradorMeta').value = ahorrador.metaAnual || 960000;
+
+  openModal('modalEditarAhorrador');
+}
+
+function handleSaveEditarAhorrador(e) {
+  e.preventDefault();
+  const id = parseInt(document.getElementById('editAhorradorId').value);
+  const oldName = document.getElementById('editAhorradorOldName').value.trim();
+  const newName = document.getElementById('editAhorradorNombre').value.trim().toUpperCase();
+  const rawTel = document.getElementById('editAhorradorTelefono').value.trim();
+  const tel = cleanPhoneNumber(rawTel);
+  const modalidad = document.getElementById('editAhorradorModalidad').value;
+  const cuota = parseFloat(document.getElementById('editAhorradorCuota').value) || 40000;
+  const meta = parseFloat(document.getElementById('editAhorradorMeta').value) || 960000;
+
+  let ahorrador = (AppState.data.ahorradores || []).find(a => a.id === id);
+  if (!ahorrador) return;
+
+  // Check if name changed and update references in quincenas / creditos / abonos
+  if (oldName && newName && oldName !== newName) {
+    (AppState.data.quincenas || []).forEach(q => {
+      if (q.pagos && q.pagos[oldName]) {
+        q.pagos[newName] = q.pagos[oldName];
+        delete q.pagos[oldName];
+      }
+    });
+    (AppState.data.creditos || []).forEach(c => {
+      if (c.socio.toLowerCase() === oldName.toLowerCase()) {
+        c.socio = newName;
+      }
+    });
+    (AppState.data.abonos || []).forEach(ab => {
+      if (ab.socio.toLowerCase() === oldName.toLowerCase()) {
+        ab.socio = newName;
+      }
+    });
+  }
+
+  ahorrador.nombre = newName;
+  ahorrador.telefono = tel;
+  ahorrador.modalidad = modalidad;
+  ahorrador.cuotaBase = cuota;
+  ahorrador.metaAnual = meta;
+
+  saveState();
+  closeModal('modalEditarAhorrador');
+  populateDropdowns();
+  refreshAllViews();
+  showToast(`Datos actualizados para ${newName} (WhatsApp: ${tel ? '+' + tel : 'Sin registrar'})`, 'success');
+}
+
+function deleteCurrentAhorrador() {
+  const id = parseInt(document.getElementById('editAhorradorId').value);
+  const oldName = document.getElementById('editAhorradorOldName').value.trim();
+  if (confirm(`¿Estás seguro de que deseas eliminar a ${oldName} del listado de ahorradores?`)) {
+    AppState.data.ahorradores = (AppState.data.ahorradores || []).filter(a => a.id !== id);
+    saveState();
+    closeModal('modalEditarAhorrador');
+    populateDropdowns();
+    refreshAllViews();
+    showToast(`${oldName} ha sido eliminado`, 'info');
+  }
+}
+
+function testChatFromEditModal() {
+  const rawTel = document.getElementById('editAhorradorTelefono').value.trim();
+  const clean = cleanPhoneNumber(rawTel);
+  if (!clean) {
+    alert('Ingresa primero un número de teléfono válido.');
+    return;
+  }
+  const msg = '¡Hola! Te saludo desde la administración de la Natillera 2026.';
+  window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ==========================================
+// VIEW 6: CONFIGURACIÓN, EXCEL Y RESPALDO
+// ==========================================
+
 function renderConfigView() {
   const cfg = AppState.data.config || {};
   const nameEl = document.getElementById('configNombreInput');
+  const titleEl = document.getElementById('configTituloTableroInput');
+  const subEl = document.getElementById('configSubtituloInput');
   const adminEl = document.getElementById('configAdminInput');
   const phoneEl = document.getElementById('configAdminPhoneInput');
+  const metaEl = document.getElementById('configMetaGlobalInput');
   const tasaEl = document.getElementById('configTasaInput');
   const headerAdmin = document.getElementById('headerAdminName');
 
   if (nameEl) nameEl.value = cfg.nombre || 'NATILLERA 2026';
+  if (titleEl) titleEl.value = cfg.tituloTablero || 'Tablero General Natillera 2026';
+  if (subEl) subEl.value = cfg.subtitulo || 'Control consolidado de ahorros quincenales, préstamos con intereses congelados a la fecha de pago y generación de comprobantes para WhatsApp.';
   if (adminEl) adminEl.value = cfg.administrador || 'Santiago Henao';
   if (phoneEl) phoneEl.value = cfg.telefonoAdmin || '';
+  if (metaEl) metaEl.value = cfg.metaGlobal || 12480000;
   if (tasaEl) tasaEl.value = cfg.tasaMesDefault || 0.005;
   if (headerAdmin) headerAdmin.textContent = cfg.administrador || 'Santiago Henao';
+
+  applyDashboardViewsPreferences();
 }
 
 function saveGeneralConfig() {
   if (!AppState.data.config) AppState.data.config = {};
   AppState.data.config.nombre = document.getElementById('configNombreInput').value.trim();
+  AppState.data.config.tituloTablero = document.getElementById('configTituloTableroInput').value.trim();
+  AppState.data.config.subtitulo = document.getElementById('configSubtituloInput').value.trim();
   AppState.data.config.administrador = document.getElementById('configAdminInput').value.trim();
-  AppState.data.config.telefonoAdmin = document.getElementById('configAdminPhoneInput').value.trim();
+  AppState.data.config.telefonoAdmin = cleanPhoneNumber(document.getElementById('configAdminPhoneInput').value.trim());
+  AppState.data.config.metaGlobal = parseFloat(document.getElementById('configMetaGlobalInput').value) || 12480000;
   AppState.data.config.tasaMesDefault = parseFloat(document.getElementById('configTasaInput').value) || 0.005;
 
   saveState();
+  applyDashboardViewsPreferences();
   refreshAllViews();
-  showToast('Parámetros guardados correctamente', 'success');
+  showToast('Nombres, textos y parámetros guardados correctamente', 'success');
+}
+
+function toggleDashboardViewElement(elementId, isVisible) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.classList.toggle('hidden', !isVisible);
+  }
+  if (!AppState.data.config) AppState.data.config = {};
+  if (!AppState.data.config.views) AppState.data.config.views = {};
+  AppState.data.config.views[elementId] = isVisible;
+  saveState();
+}
+
+function applyDashboardViewsPreferences() {
+  const cfg = AppState.data.config || {};
+  const views = cfg.views || {};
+
+  const mapping = [
+    { id: 'dashBanner', checkId: 'cfgShowBanner' },
+    { id: 'dashCardAhorro', checkId: 'cfgShowAhorroCard' },
+    { id: 'dashCardCapital', checkId: 'cfgShowCapitalCard' },
+    { id: 'dashCardIntereses', checkId: 'cfgShowInteresesCard' },
+    { id: 'dashCardAbonos', checkId: 'cfgShowAbonosCard' },
+    { id: 'dashChartAhorroBox', checkId: 'cfgShowChartAhorro' },
+    { id: 'dashChartCarteraBox', checkId: 'cfgShowChartCartera' },
+    { id: 'dashRecentAbonosBox', checkId: 'cfgShowRecentAbonos' },
+    { id: 'dashVoucherBox', checkId: 'cfgShowVoucherBox' }
+  ];
+
+  mapping.forEach(item => {
+    const isVisible = views[item.id] !== undefined ? views[item.id] : true;
+    const el = document.getElementById(item.id);
+    const chk = document.getElementById(item.checkId);
+    if (el) el.classList.toggle('hidden', !isVisible);
+    if (chk) chk.checked = isVisible;
+  });
+
+  // Apply titles
+  if (cfg.nombre) {
+    const logoBrand = document.querySelector('header .bg-clip-text');
+    if (logoBrand) logoBrand.textContent = cfg.nombre;
+  }
+  if (cfg.tituloTablero) {
+    const mainTitle = document.getElementById('dashMainTitle');
+    if (mainTitle) mainTitle.textContent = cfg.tituloTablero;
+  }
+  if (cfg.subtitulo) {
+    const mainSub = document.getElementById('dashMainSubtitle');
+    if (mainSub) mainSub.textContent = cfg.subtitulo;
+  }
+  if (cfg.theme) {
+    changeColorTheme(cfg.theme, false);
+    const themeSel = document.getElementById('configThemeSelect');
+    if (themeSel) themeSel.value = cfg.theme;
+  }
+  if (cfg.defaultView) {
+    const defViewSel = document.getElementById('configDefaultViewSelect');
+    if (defViewSel) defViewSel.value = cfg.defaultView;
+  }
+}
+
+function changeColorTheme(themeName, doSave = true) {
+  if (doSave) {
+    if (!AppState.data.config) AppState.data.config = {};
+    AppState.data.config.theme = themeName;
+    saveState();
+  }
+  document.body.classList.remove('theme-emerald', 'theme-indigo', 'theme-amber', 'theme-cyan');
+  document.body.classList.add(`theme-${themeName}`);
+  if (doSave) showToast(`Tema cambiado a ${themeName}`, 'info');
+}
+
+function saveDashboardPreferences() {
+  if (!AppState.data.config) AppState.data.config = {};
+  AppState.data.config.defaultView = document.getElementById('configDefaultViewSelect').value;
+  saveState();
+  showToast('Preferencia de inicio guardada', 'success');
 }
 
 function downloadJsonBackup() {

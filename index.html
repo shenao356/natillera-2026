@@ -182,15 +182,15 @@
       <section id="view-dashboard" class="space-y-6">
         
         <!-- Welcome Banner & Quick Action Buttons -->
-        <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-indigo-900/90 via-surface-card to-surface-dark border border-brand-500/30 shadow-2xl">
+        <div id="dashBanner" class="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-indigo-900/90 via-surface-card to-surface-dark border border-brand-500/30 shadow-2xl">
           <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-3">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>Sistema Financiero en Vivo</span>
               </div>
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Tablero General Natillera 2026</h1>
-              <p class="text-sm text-slate-300 mt-1 max-w-xl">
+              <h1 id="dashMainTitle" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Tablero General Natillera 2026</h1>
+              <p id="dashMainSubtitle" class="text-sm text-slate-300 mt-1 max-w-xl">
                 Control consolidado de ahorros quincenales, préstamos con intereses congelados a la fecha de pago y generación de comprobantes para WhatsApp.
               </p>
             </div>
@@ -214,12 +214,12 @@
         </div>
 
         <!-- 4 Top KPI Metric Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div id="dashKpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Card 1: Total Ahorrado -->
-          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div id="dashCardAhorro" class="glass-card p-5 rounded-2xl relative overflow-hidden group">
             <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
-              <span>TOTAL AHORRADO</span>
+              <span id="labelKpiAhorro">TOTAL AHORRADO</span>
               <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <i data-lucide="wallet" class="w-4 h-4"></i>
               </div>
@@ -237,9 +237,9 @@
           </div>
 
           <!-- Card 2: Capital en Calle (Créditos) -->
-          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div id="dashCardCapital" class="glass-card p-5 rounded-2xl relative overflow-hidden group">
             <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
-              <span>CAPITAL EN LA CALLE</span>
+              <span id="labelKpiCapital">CAPITAL EN LA CALLE</span>
               <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
                 <i data-lucide="trending-up" class="w-4 h-4"></i>
               </div>
@@ -257,9 +257,9 @@
           </div>
 
           <!-- Card 3: Intereses Generados -->
-          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div id="dashCardIntereses" class="glass-card p-5 rounded-2xl relative overflow-hidden group">
             <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
-              <span>INTERESES TOTALES</span>
+              <span id="labelKpiIntereses">INTERESES TOTALES</span>
               <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
                 <i data-lucide="percent" class="w-4 h-4"></i>
               </div>
@@ -277,9 +277,9 @@
           </div>
 
           <!-- Card 4: Total Abonos Recaudados -->
-          <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div id="dashCardAbonos" class="glass-card p-5 rounded-2xl relative overflow-hidden group">
             <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
-              <span>TOTAL RECAUDADO EN ABONOS</span>
+              <span id="labelKpiAbonos">TOTAL RECAUDADO EN ABONOS</span>
               <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
                 <i data-lucide="check-circle-2" class="w-4 h-4"></i>
               </div>
@@ -299,13 +299,13 @@
         </div>
 
         <!-- Charts Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div id="dashChartsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           <!-- Chart 1: Progresión Quincenal de Ahorro -->
-          <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+          <div id="dashChartAhorroBox" class="glass-panel p-5 rounded-2xl border border-surface-border">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                <h3 id="labelChartAhorroTitle" class="text-base font-bold text-white flex items-center space-x-2">
                   <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
                   <span>Recaudación Quincenal de Ahorro</span>
                 </h3>
@@ -319,10 +319,10 @@
           </div>
 
           <!-- Chart 2: Estado de Cartera de Créditos -->
-          <div class="glass-panel p-5 rounded-2xl border border-surface-border">
+          <div id="dashChartCarteraBox" class="glass-panel p-5 rounded-2xl border border-surface-border">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                <h3 id="labelChartCarteraTitle" class="text-base font-bold text-white flex items-center space-x-2">
                   <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
                   <span>Distribución de Cartera de Créditos</span>
                 </h3>
@@ -338,10 +338,10 @@
         </div>
 
         <!-- Recent Activity & Quick WhatsApp Vouchers -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div id="dashBottomGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- Recent Abonos Feed -->
-          <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-surface-border">
+          <div id="dashRecentAbonosBox" class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-surface-border">
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h3 class="text-base font-bold text-white flex items-center space-x-2">
@@ -362,7 +362,7 @@
           </div>
 
           <!-- WhatsApp Quick Voucher Launcher -->
-          <div class="glass-panel p-5 rounded-2xl border border-surface-border flex flex-col justify-between">
+          <div id="dashVoucherBox" class="glass-panel p-5 rounded-2xl border border-surface-border flex flex-col justify-between">
             <div>
               <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mb-4 shadow-lg glow-emerald">
                 <i data-lucide="message-circle" class="w-6 h-6"></i>
@@ -687,9 +687,25 @@
               </div>
 
               <div>
-                <label class="block font-semibold text-slate-300 mb-1">Teléfono WhatsApp del Socio (Opcional)</label>
-                <input type="tel" id="receiptTelefonoInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
-                <p class="text-[10px] text-slate-400 mt-1">Incluye código de país (ejemplo: 57 para Colombia).</p>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="font-semibold text-slate-300">Teléfono WhatsApp del Socio</label>
+                  <button type="button" onclick="quickEditCurrentSocioPhone()" class="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 font-bold">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                    <span>Guardar en su perfil</span>
+                  </button>
+                </div>
+                <div class="relative">
+                  <i data-lucide="phone" class="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                  <input type="tel" id="receiptTelefonoInput" placeholder="Ej: 573001234567 o 3001234567" oninput="onReceiptPhoneInput()" class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500 font-mono" />
+                </div>
+                <!-- Status Badge for WhatsApp -->
+                <div id="receiptWhatsAppStatusBadge" class="mt-1.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center justify-between">
+                  <span class="flex items-center space-x-1.5">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span id="receiptWhatsAppStatusText">Listo para abrir chat directo</span>
+                  </span>
+                  <span class="text-[10px] text-slate-400">Clic en Enviar abrirá su chat</span>
+                </div>
               </div>
 
               <div>
@@ -850,45 +866,183 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          <!-- Box 1: Datos de la Natillera -->
+          <!-- Box 1: Personalización de Nombres y Textos -->
           <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
             <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
-              <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i>
-              <span>Parámetros Generales</span>
+              <i data-lucide="type" class="w-4 h-4 text-emerald-400"></i>
+              <span>Personalizar Nombres & Textos</span>
             </h3>
 
             <div class="space-y-3 text-xs">
               <div>
                 <label class="block font-semibold text-slate-300 mb-1">Nombre de la Natillera</label>
                 <input type="text" id="configNombreInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                <p class="text-[10px] text-slate-400 mt-0.5">Se actualiza en el encabezado, comprobantes e informes.</p>
               </div>
 
               <div>
-                <label class="block font-semibold text-slate-300 mb-1">Nombre del Administrador</label>
-                <input type="text" id="configAdminInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                <label class="block font-semibold text-slate-300 mb-1">Título del Tablero Principal</label>
+                <input type="text" id="configTituloTableroInput" placeholder="Ej: Tablero General Natillera 2026" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
               </div>
 
               <div>
-                <label class="block font-semibold text-slate-300 mb-1">Teléfono WhatsApp del Administrador</label>
-                <input type="tel" id="configAdminPhoneInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                <label class="block font-semibold text-slate-300 mb-1">Subtítulo / Lema</label>
+                <input type="text" id="configSubtituloInput" placeholder="Ej: Control consolidado de ahorros y préstamos..." class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
               </div>
 
-              <div>
-                <label class="block font-semibold text-slate-300 mb-1">Tasa de Interés Mensual por Defecto (%)</label>
-                <input type="number" step="0.001" id="configTasaInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
-                <p class="text-[10px] text-slate-400 mt-1">0.005 corresponde al 0.5% mensual (tasa configurada en tu Excel).</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">Nombre Administrador</label>
+                  <input type="text" id="configAdminInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">WhatsApp Admin</label>
+                  <input type="tel" id="configAdminPhoneInput" placeholder="Ej: 573001234567" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                </div>
               </div>
 
-              <button onclick="saveGeneralConfig()" class="w-full py-2.5 rounded-xl gradient-indigo text-white font-bold text-xs shadow-md hover:opacity-95 transition">
-                Guardar Cambios
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">Meta Global Grupo ($)</label>
+                  <input type="number" id="configMetaGlobalInput" value="12480000" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-300 mb-1">Tasa Créditos Mensual</label>
+                  <input type="number" step="0.001" id="configTasaInput" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+                </div>
+              </div>
+
+              <button onclick="saveGeneralConfig()" class="w-full py-2.5 rounded-xl gradient-emerald text-white font-bold text-xs shadow-md hover:opacity-95 transition flex items-center justify-center space-x-1.5">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>Guardar Nombres y Textos</span>
               </button>
             </div>
           </div>
 
-          <!-- Box 2: Respaldo, Excel & GitHub Cloud -->
+          <!-- Box 2: Personalización de Vistas del Dashboard -->
           <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
             <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
-              <i data-lucide="cloud" class="w-4 h-4 text-emerald-400"></i>
+              <i data-lucide="layout" class="w-4 h-4 text-brand-400"></i>
+              <span>Personalizar Vistas del Dashboard</span>
+            </h3>
+
+            <p class="text-[11px] text-slate-300">
+              Activa o desactiva qué tarjetas y secciones deseas ver en el Tablero Principal según tus preferencias:
+            </p>
+
+            <div class="space-y-2.5 text-xs">
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                  <span>Banner Superior de Bienvenida</span>
+                </span>
+                <input type="checkbox" id="cfgShowBanner" onchange="toggleDashboardViewElement('dashBanner', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Tarjeta: Total Ahorrado</span>
+                </span>
+                <input type="checkbox" id="cfgShowAhorroCard" onchange="toggleDashboardViewElement('dashCardAhorro', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Tarjeta: Capital en la Calle (Créditos)</span>
+                </span>
+                <input type="checkbox" id="cfgShowCapitalCard" onchange="toggleDashboardViewElement('dashCardCapital', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                  <span>Tarjeta: Intereses Totales</span>
+                </span>
+                <input type="checkbox" id="cfgShowInteresesCard" onchange="toggleDashboardViewElement('dashCardIntereses', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span>Tarjeta: Total Abonos Recaudados</span>
+                </span>
+                <input type="checkbox" id="cfgShowAbonosCard" onchange="toggleDashboardViewElement('dashCardAbonos', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Gráfico: Recaudación Quincenal</span>
+                </span>
+                <input type="checkbox" id="cfgShowChartAhorro" onchange="toggleDashboardViewElement('dashChartAhorroBox', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>Gráfico: Cartera de Créditos</span>
+                </span>
+                <input type="checkbox" id="cfgShowChartCartera" onchange="toggleDashboardViewElement('dashChartCarteraBox', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-brand-400"></span>
+                  <span>Historial de Últimos Movimientos</span>
+                </span>
+                <input type="checkbox" id="cfgShowRecentAbonos" onchange="toggleDashboardViewElement('dashRecentAbonosBox', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-surface-card/60 hover:bg-surface-card cursor-pointer border border-slate-800 transition">
+                <span class="text-slate-200 font-medium flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                  <span>Caja de Comprobantes Rápidos</span>
+                </span>
+                <input type="checkbox" id="cfgShowVoucherBox" onchange="toggleDashboardViewElement('dashVoucherBox', this.checked)" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-surface-dark border-slate-700" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Box 3: Apariencia & Pantalla de Inicio -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+              <i data-lucide="palette" class="w-4 h-4 text-purple-400"></i>
+              <span>Apariencia & Pantalla de Inicio</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Pantalla de Inicio al Abrir</label>
+                <select id="configDefaultViewSelect" onchange="saveDashboardPreferences()" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <option value="dashboard">Tablero Principal (Dashboard)</option>
+                  <option value="ahorros">Control de Ahorros (13 Socios)</option>
+                  <option value="creditos">Control de Créditos y Abonos</option>
+                  <option value="comprobantes">Centro de Comprobantes WhatsApp</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Paleta de Colores de Acento</label>
+                <select id="configThemeSelect" onchange="changeColorTheme(this.value)" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+                  <option value="emerald">🟢 Fintech Esmeralda (Predeterminado)</option>
+                  <option value="indigo">🟣 Neobanco Nu Índigo</option>
+                  <option value="amber">🟡 Ejecutivo Gold & Ámbar</option>
+                  <option value="cyan">🔵 Océano & Cian Tecnológico</option>
+                </select>
+              </div>
+
+              <div class="p-3 rounded-xl bg-surface-dark border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+                💡 Todas tus preferencias de vistas y nombres se guardan automáticamente en tu dispositivo y se mantienen al usar la app.
+              </div>
+            </div>
+          </div>
+
+          <!-- Box 4: Respaldo, Excel & GitHub Cloud -->
+          <div class="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+              <i data-lucide="cloud" class="w-4 h-4 text-cyan-400"></i>
               <span>GitHub Cloud & Copias de Seguridad</span>
             </h3>
 
@@ -900,11 +1054,11 @@
                   <span>Usuario GitHub: <strong class="text-emerald-400">shenao356</strong></span>
                 </div>
                 <p class="text-[11px] text-slate-400">
-                  Repositorio listo para desplegar en GitHub Pages. Todos los archivos están preparados para funcionar online 24/7 sin pagar servidores.
+                  Repositorio vinculado en <a href="https://github.com/shenao356/natillera-2026" target="_blank" class="text-indigo-400 underline font-semibold">github.com/shenao356/natillera-2026</a>. Activa GitHub Pages para acceder en la nube desde cualquier celular.
                 </p>
               </div>
 
-              <div class="pt-2 space-y-2">
+              <div class="pt-1 space-y-2">
                 <button onclick="exportFullExcel()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center space-x-2 transition shadow-md">
                   <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                   <span>Descargar Todos los Datos en Excel (.xlsx)</span>
@@ -1242,6 +1396,78 @@
         <div class="pt-3 border-t border-slate-700/60 flex items-center justify-end space-x-2">
           <button type="button" onclick="closeModal('modalNuevoSocio')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
           <button type="submit" class="px-5 py-2 rounded-xl gradient-cyan text-white font-bold shadow-md">Guardar Socio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 6: Editar Ahorrador / Socio -->
+  <div id="modalEditarAhorrador" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-surface-border shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="user-cog" class="w-5 h-5 text-indigo-400"></i>
+          <span>Editar Datos del Ahorrador</span>
+        </h3>
+        <button onclick="closeModal('modalEditarAhorrador')" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formEditarAhorrador" onsubmit="handleSaveEditarAhorrador(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="editAhorradorId" />
+        <input type="hidden" id="editAhorradorOldName" />
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Nombre Completo</label>
+          <input type="text" id="editAhorradorNombre" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500 uppercase font-semibold" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-300">Teléfono WhatsApp</label>
+            <button type="button" onclick="testChatFromEditModal()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center space-x-1">
+              <i data-lucide="message-circle" class="w-3 h-3"></i>
+              <span>Probar chat</span>
+            </button>
+          </div>
+          <div class="relative">
+            <i data-lucide="phone" class="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="tel" id="editAhorradorTelefono" placeholder="Ej: 573001234567 o 3001234567" class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500 font-mono" />
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Este número se vinculará para enviar comprobantes y extractos por WhatsApp con 1 solo clic.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Modalidad de Pago</label>
+            <select id="editAhorradorModalidad" class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500">
+              <option value="Quincenal">Quincenal</option>
+              <option value="Mensual">Mensual</option>
+              <option value="Bimestral / Adelantada">Bimestral / Adelantada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Cuota Base ($)</label>
+            <input type="number" id="editAhorradorCuota" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Meta Anual Estimada ($)</label>
+          <input type="number" id="editAhorradorMeta" required class="w-full px-3 py-2 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-700/60 flex items-center justify-between">
+          <button type="button" onclick="deleteCurrentAhorrador()" class="px-3 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 font-semibold border border-rose-800/40 flex items-center space-x-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Eliminar</span>
+          </button>
+
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="closeModal('modalEditarAhorrador')" class="px-4 py-2 rounded-xl bg-surface-card text-slate-300 font-semibold">Cancelar</button>
+            <button type="submit" class="px-5 py-2 rounded-xl gradient-indigo text-white font-bold shadow-md">Guardar Cambios</button>
+          </div>
         </div>
       </form>
     </div>
