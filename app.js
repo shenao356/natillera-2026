@@ -18,6 +18,221 @@ let AppState = {
 };
 
 // ==========================================
+// AUTHENTICATION & INACTIVITY SECURITY (30 MIN)
+// ==========================================
+const AUTH_CONFIG = {
+  adminUser: 'shenao356',
+  adminPass: '12345678',
+  inactivityLimitMs: 30 * 60 * 1000, // 30 minutes in milliseconds
+  checkIntervalMs: 1000
+};
+
+let inactivityTimer = null;
+let lastUserActivityTime = Date.now();
+let lastThrottleActivityTime = 0;
+
+function getAuthSession() {
+  const sessionStr = sessionStorage.getItem('natillera_auth_session') || localStorage.getItem('natillera_auth_session');
+  if (!sessionStr) return null;
+  try {
+    return JSON.parse(sessionStr);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveAuthSession(sessionData, remember = false) {
+  const str = JSON.stringify(sessionData);
+  sessionStorage.setItem('natillera_auth_session', str);
+  if (remember) {
+    localStorage.setItem('natillera_auth_session', str);
+  } else {
+    localStorage.removeItem('natillera_auth_session');
+  }
+}
+
+function clearAuthSession() {
+  sessionStorage.removeItem('natillera_auth_session');
+  localStorage.removeItem('natillera_auth_session');
+}
+
+function checkAuthOnLoad() {
+  const session = getAuthSession();
+  if (!session || !session.user || session.user.toLowerCase() !== AUTH_CONFIG.adminUser.toLowerCase()) {
+    showLoginScreen();
+    return false;
+  }
+
+  // Check if session expired due to inactivity
+  const now = Date.now();
+  const lastActive = session.lastActivity || session.loginTime || now;
+  if (now - lastActive > AUTH_CONFIG.inactivityLimitMs) {
+    clearAuthSession();
+    showLoginScreen(true);
+    return false;
+  }
+
+  // Valid session
+  lastUserActivityTime = now;
+  updateSessionActivity();
+  showAppDashboard();
+  return true;
+}
+
+function showLoginScreen(wasInactivity = false) {
+  const loginScreen = document.getElementById('loginScreen');
+  const appContainer = document.getElementById('appContainer');
+  const alertEl = document.getElementById('loginErrorAlert');
+  const alertMsg = document.getElementById('loginErrorMsg');
+
+  if (loginScreen) loginScreen.classList.remove('hidden');
+  if (appContainer) appContainer.classList.add('hidden');
+
+  if (inactivityTimer) {
+    clearInterval(inactivityTimer);
+    inactivityTimer = null;
+  }
+
+  if (wasInactivity && alertEl && alertMsg) {
+    alertEl.classList.remove('hidden');
+    alertMsg.textContent = 'Tu sesión se cerró automáticamente tras 30 minutos de inactividad por seguridad.';
+  } else if (alertEl) {
+    alertEl.classList.add('hidden');
+  }
+
+  lucide.createIcons();
+}
+
+function showAppDashboard() {
+  const loginScreen = document.getElementById('loginScreen');
+  const appContainer = document.getElementById('appContainer');
+
+  if (loginScreen) loginScreen.classList.add('hidden');
+  if (appContainer) appContainer.classList.remove('hidden');
+
+  initInactivityTracker();
+  lucide.createIcons();
+}
+
+function handleLoginSubmit(e) {
+  e.preventDefault();
+  const usernameInput = (document.getElementById('loginUsername')?.value || '').trim();
+  const passwordInput = document.getElementById('loginPassword')?.value || '';
+  const remember = document.getElementById('loginRememberMe')?.checked || false;
+  const alertEl = document.getElementById('loginErrorAlert');
+  const alertMsg = document.getElementById('loginErrorMsg');
+
+  if (usernameInput.toLowerCase() === AUTH_CONFIG.adminUser.toLowerCase() && passwordInput === AUTH_CONFIG.adminPass) {
+    if (alertEl) alertEl.classList.add('hidden');
+    
+    const now = Date.now();
+    const sessionData = {
+      user: AUTH_CONFIG.adminUser,
+      role: 'Administrador Principal',
+      loginTime: now,
+      lastActivity: now
+    };
+    saveAuthSession(sessionData, remember);
+    lastUserActivityTime = now;
+    showAppDashboard();
+    refreshAllViews();
+    showToast(`¡Bienvenido de nuevo, Administrador ${AUTH_CONFIG.adminUser}!`, 'success');
+  } else {
+    if (alertEl && alertMsg) {
+      alertEl.classList.remove('hidden');
+      alertMsg.textContent = 'Usuario o contraseña incorrectos. Verifica tus credenciales de administrador.';
+      const formEl = document.getElementById('loginForm');
+      if (formEl) {
+        formEl.classList.add('animate-shake');
+        setTimeout(() => formEl.classList.remove('animate-shake'), 600);
+      }
+    }
+    showToast('Acceso denegado: Credenciales inválidas', 'error');
+  }
+}
+
+function logoutAdmin(wasInactivity = false) {
+  clearAuthSession();
+  showLoginScreen(wasInactivity);
+  if (!wasInactivity) {
+    showToast('Has cerrado sesión correctamente', 'info');
+  }
+}
+
+function autoFillAdminCredentials() {
+  const u = document.getElementById('loginUsername');
+  const p = document.getElementById('loginPassword');
+  if (u) u.value = AUTH_CONFIG.adminUser;
+  if (p) p.value = AUTH_CONFIG.adminPass;
+  showToast('Credenciales de administrador cargadas', 'info');
+}
+
+function togglePasswordVisibility() {
+  const p = document.getElementById('loginPassword');
+  const icon = document.getElementById('eyeIcon');
+  if (!p) return;
+  if (p.type === 'password') {
+    p.type = 'text';
+    if (icon) icon.setAttribute('data-lucide', 'eye-off');
+  } else {
+    p.type = 'password';
+    if (icon) icon.setAttribute('data-lucide', 'eye');
+  }
+  lucide.createIcons();
+}
+
+function recordUserActivity() {
+  const now = Date.now();
+  // Throttle updates to once every 5 seconds
+  if (now - lastThrottleActivityTime > 5000) {
+    lastUserActivityTime = now;
+    lastThrottleActivityTime = now;
+    updateSessionActivity();
+  }
+}
+
+function updateSessionActivity() {
+  const session = getAuthSession();
+  if (session) {
+    session.lastActivity = Date.now();
+    const remember = !!localStorage.getItem('natillera_auth_session');
+    saveAuthSession(session, remember);
+  }
+}
+
+function initInactivityTracker() {
+  if (inactivityTimer) clearInterval(inactivityTimer);
+
+  lastUserActivityTime = Date.now();
+
+  const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+  activityEvents.forEach(evt => {
+    window.addEventListener(evt, recordUserActivity, { passive: true });
+  });
+
+  inactivityTimer = setInterval(() => {
+    const elapsed = Date.now() - lastUserActivityTime;
+    const remaining = AUTH_CONFIG.inactivityLimitMs - elapsed;
+
+    if (remaining <= 0) {
+      logoutAdmin(true);
+      return;
+    }
+
+    // Format remaining time MM:SS
+    const totalSecs = Math.max(0, Math.floor(remaining / 1000));
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    const str = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    const headEl = document.getElementById('headerInactivityBadge');
+    if (headEl) headEl.textContent = str;
+    const sideEl = document.getElementById('sidebarInactivityBadge');
+    if (sideEl) sideEl.textContent = str;
+  }, AUTH_CONFIG.checkIntervalMs);
+}
+
+// ==========================================
 // INITIALIZATION & STORAGE
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,11 +242,14 @@ document.addEventListener('DOMContentLoaded', () => {
   populateDropdowns();
   setupNavigation();
 
-  // If a default start view was customized, open it
-  if (AppState.data && AppState.data.config && AppState.data.config.defaultView) {
-    navigate(AppState.data.config.defaultView);
-  } else {
-    refreshAllViews();
+  // Check admin session before displaying data
+  const isAuth = checkAuthOnLoad();
+  if (isAuth) {
+    if (AppState.data && AppState.data.config && AppState.data.config.defaultView) {
+      navigate(AppState.data.config.defaultView);
+    } else {
+      refreshAllViews();
+    }
   }
   lucide.createIcons();
 });
@@ -899,49 +1117,82 @@ function renderSociosView() {
 
   container.innerHTML = sociosList.map(nombre => {
     const ahorroObj = ahorradoresMap[nombre];
-    const userCredits = (AppState.data.creditos || []).filter(c => c.socio.toLowerCase() === nombre.toLowerCase()).map(calculateCreditMetrics);
+    const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === nombre).map(calculateCreditMetrics);
     
     const saldoAhorro = ahorroObj ? ahorroObj.totalAhorrado : 0;
     const saldoDeuda = userCredits.filter(c => c.estado !== 'PAGADO').reduce((sum, c) => sum + c.totalPagarHoy, 0);
     const telefono = ahorroObj ? (ahorroObj.telefono || '') : '';
+    const cleanTel = cleanPhoneNumber(telefono);
+    const modalidad = ahorroObj ? (ahorroObj.modalidad || 'Quincenal') : 'Quincenal';
+    const cuota = ahorroObj ? (ahorroObj.cuotaBase || 40000) : 40000;
+    const meta = ahorroObj ? (ahorroObj.metaAnual || 960000) : 960000;
+    const pct = Math.min(200, (saldoAhorro / meta) * 100);
 
     const initials = nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
 
     return `
       <div class="glass-card p-5 rounded-2xl border border-surface-border flex flex-col justify-between space-y-4">
         <div>
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm shadow-md">
-              ${initials}
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm shadow-md shrink-0">
+                ${initials}
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-bold text-white truncate">${escapeHtml(nombre)}</h4>
+                <p class="text-[11px] text-slate-400 flex items-center space-x-1.5 mt-0.5">
+                  <span class="px-2 py-0.5 rounded-md bg-surface-dark text-cyan-300 font-semibold border border-slate-700/60">${escapeHtml(modalidad)}</span>
+                  <span class="text-slate-500">•</span>
+                  <span class="text-slate-300 font-semibold">${formatCOP(cuota)}</span>
+                </p>
+              </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="text-sm font-bold text-white truncate">${escapeHtml(nombre)}</h4>
-              <p class="text-[11px] text-slate-400 flex items-center space-x-1">
-                <i data-lucide="phone" class="w-3 h-3 text-emerald-400"></i>
-                <span>${telefono ? telefono : '<span class="text-slate-500 italic">Sin WhatsApp registrado</span>'}</span>
-              </p>
-            </div>
+            
+            <button onclick="openModalEditarSocio('${escapeHtml(nombre)}')" title="Editar toda la información del socio" class="p-1.5 rounded-lg bg-surface-card hover:bg-slate-700 text-slate-300 hover:text-white transition border border-slate-700">
+              <i data-lucide="edit-3" class="w-4 h-4 text-indigo-400"></i>
+            </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-700/60 text-xs">
+          <!-- WhatsApp Badge -->
+          <div class="mt-3 p-2 rounded-xl bg-surface-dark/70 border border-slate-700/60 flex items-center justify-between text-[11px]">
+            <div class="flex items-center space-x-1.5 truncate">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+              <span class="font-mono text-slate-300 font-semibold truncate">
+                ${cleanTel ? `+${cleanTel}` : '<span class="text-slate-500 italic font-sans font-normal">Sin WhatsApp registrado</span>'}
+              </span>
+            </div>
+            <button onclick="openModalEditarSocio('${escapeHtml(nombre)}')" class="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold underline underline-offset-2">
+              ${cleanTel ? 'Modificar' : '+ Agregar'}
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-700/60 text-xs">
             <div class="p-2.5 rounded-xl bg-surface-card/60">
               <span class="text-slate-400 text-[10px] block">Ahorro Acumulado</span>
-              <strong class="text-emerald-400 font-bold">${formatCOP(saldoAhorro)}</strong>
+              <strong class="text-emerald-400 font-bold text-sm">${formatCOP(saldoAhorro)}</strong>
+              <span class="text-[10px] text-slate-400">Meta: ${pct.toFixed(0)}%</span>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card/60">
               <span class="text-slate-400 text-[10px] block">Deuda Créditos</span>
-              <strong class="${saldoDeuda > 0 ? 'text-amber-400' : 'text-slate-400'} font-bold">${formatCOP(saldoDeuda)}</strong>
+              <strong class="${saldoDeuda > 0 ? 'text-amber-400' : 'text-slate-400'} font-bold text-sm">${formatCOP(saldoDeuda)}</strong>
+              <span class="text-[10px] text-slate-500">${userCredits.length} crédito(s)</span>
             </div>
           </div>
         </div>
 
         <div class="pt-2 flex items-center space-x-2">
-          <button onclick="editSocioPhone('${escapeHtml(nombre)}', '${escapeHtml(telefono)}')" class="flex-1 py-2 rounded-xl bg-surface-card hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center space-x-1 transition border border-slate-700">
-            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-            <span>Editar Teléfono</span>
+          <button onclick="openModalEditarSocio('${escapeHtml(nombre)}')" class="flex-1 py-2 rounded-xl gradient-indigo hover:opacity-95 text-white text-xs font-bold flex items-center justify-center space-x-1.5 transition shadow-md">
+            <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
+            <span>Editar Socio</span>
           </button>
+
+          ${cleanTel ? `
+            <a href="https://api.whatsapp.com/send?phone=${cleanTel}" target="_blank" title="Abrir chat directo en WhatsApp" class="p-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition flex items-center justify-center">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+            </a>
+          ` : ''}
           
-          <button onclick="sendSocioSummaryWhatsApp('${escapeHtml(nombre)}', ${saldoAhorro}, ${saldoDeuda}, '${telefono}')" title="Enviar Estado de Cuenta por WhatsApp" class="p-2 rounded-xl gradient-emerald text-white shadow-md hover:opacity-95 transition">
+          <button onclick="sendSocioSummaryWhatsApp('${escapeHtml(nombre)}', ${saldoAhorro}, ${saldoDeuda}, '${cleanTel}')" title="Enviar Estado de Cuenta por WhatsApp" class="p-2 rounded-xl gradient-emerald text-white shadow-md hover:opacity-95 transition flex items-center justify-center">
             <i data-lucide="send" class="w-4 h-4"></i>
           </button>
         </div>
@@ -952,28 +1203,8 @@ function renderSociosView() {
   lucide.createIcons();
 }
 
-function editSocioPhone(nombre, currentPhone) {
-  const norm = normalizeSocioName(nombre);
-  const newPhone = prompt(`Ingresa el número de WhatsApp para ${norm} (Ejemplo: 573001234567 o 3001234567):`, currentPhone || '');
-  if (newPhone !== null) {
-    const clean = cleanPhoneNumber(newPhone);
-    let ahorrador = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === norm);
-    if (ahorrador) {
-      ahorrador.telefono = clean;
-    } else {
-      AppState.data.ahorradores.push({
-        id: (AppState.data.ahorradores.length + 1),
-        nombre: norm,
-        modalidad: 'Quincenal',
-        cuotaBase: 40000,
-        metaAnual: 960000,
-        telefono: clean
-      });
-    }
-    saveState();
-    refreshAllViews();
-    showToast(`WhatsApp ${clean ? '+' + clean : 'guardado'} para ${norm}`, 'success');
-  }
+function editSocioPhone(nombre) {
+  openModalEditarSocio(nombre);
 }
 
 // ==========================================
@@ -1624,9 +1855,30 @@ function handleSaveNuevoSocio(e) {
 // ==========================================
 
 // Modal 6: Editar Ahorrador / Socio
-function openModalEditarAhorrador(id) {
-  const ahorrador = (AppState.data.ahorradores || []).find(a => a.id === id);
-  if (!ahorrador) return;
+function openModalEditarSocio(nameOrId) {
+  let ahorrador = null;
+  if (typeof nameOrId === 'number' || (!isNaN(nameOrId) && typeof nameOrId !== 'string')) {
+    ahorrador = (AppState.data.ahorradores || []).find(a => a.id === parseInt(nameOrId));
+  }
+  if (!ahorrador) {
+    const norm = normalizeSocioName(nameOrId);
+    ahorrador = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === norm);
+    if (!ahorrador) {
+      // Auto-create in ahorradores array if came from creditos
+      const newId = (AppState.data.ahorradores || []).length + 1;
+      ahorrador = {
+        id: newId,
+        nombre: norm,
+        modalidad: 'Quincenal',
+        cuotaBase: 40000,
+        metaAnual: 960000,
+        telefono: ''
+      };
+      if (!AppState.data.ahorradores) AppState.data.ahorradores = [];
+      AppState.data.ahorradores.push(ahorrador);
+      saveState();
+    }
+  }
 
   document.getElementById('editAhorradorId').value = ahorrador.id;
   document.getElementById('editAhorradorOldName').value = ahorrador.nombre;
@@ -1638,6 +1890,9 @@ function openModalEditarAhorrador(id) {
 
   openModal('modalEditarAhorrador');
 }
+
+// Global alias
+window.openModalEditarAhorrador = openModalEditarSocio;
 
 function handleSaveEditarAhorrador(e) {
   e.preventDefault();
@@ -1651,9 +1906,12 @@ function handleSaveEditarAhorrador(e) {
   const meta = parseFloat(document.getElementById('editAhorradorMeta').value) || 960000;
 
   let ahorrador = (AppState.data.ahorradores || []).find(a => a.id === id);
+  if (!ahorrador) {
+    ahorrador = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === oldName);
+  }
   if (!ahorrador) return;
 
-  // Check if name changed and update references in quincenas / creditos / abonos
+  // Check if name changed and cascade updates to quincenas / creditos / abonos
   if (oldName && newName && oldName !== newName) {
     (AppState.data.quincenas || []).forEach(q => {
       if (q.pagos && q.pagos[oldName]) {
@@ -1688,9 +1946,9 @@ function handleSaveEditarAhorrador(e) {
 
 function deleteCurrentAhorrador() {
   const id = parseInt(document.getElementById('editAhorradorId').value);
-  const oldName = document.getElementById('editAhorradorOldName').value.trim();
-  if (confirm(`¿Estás seguro de que deseas eliminar a ${oldName} del listado de ahorradores?`)) {
-    AppState.data.ahorradores = (AppState.data.ahorradores || []).filter(a => a.id !== id);
+  const oldName = normalizeSocioName(document.getElementById('editAhorradorOldName').value.trim());
+  if (confirm(`¿Estás seguro de que deseas eliminar a ${oldName} del listado de socios?`)) {
+    AppState.data.ahorradores = (AppState.data.ahorradores || []).filter(a => a.id !== id && normalizeSocioName(a.nombre) !== oldName);
     saveState();
     closeModal('modalEditarAhorrador');
     populateDropdowns();

@@ -132,6 +132,16 @@ body {
   animation: pulseSlow 8s infinite ease-in-out;
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
 /* Badge glow */
 .glow-emerald {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);

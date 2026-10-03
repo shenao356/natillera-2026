@@ -69,52 +69,251 @@
     <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 5s;"></div>
   </div>
 
-  <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-surface-border">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <!-- ========================================== -->
+  <!-- LOGIN SCREEN (PANTALLA DE INICIO DE SESIÓN) -->
+  <!-- ========================================== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-10 relative z-30">
+    <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
       
-      <!-- Brand Logo & Title -->
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('dashboard')">
-        <div class="w-10 h-10 rounded-xl gradient-indigo flex items-center justify-center text-white shadow-lg glow-indigo">
-          <i data-lucide="wallet-cards" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <div class="flex items-center space-x-2">
-            <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">NATILLERA</span>
-            <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">2026</span>
+      <!-- Left Column: Rich Colorful Project Information (7 cols) -->
+      <div class="lg:col-span-7 glass-panel p-6 sm:p-8 rounded-3xl border border-surface-border shadow-2xl flex flex-col justify-between relative overflow-hidden">
+        <!-- Glow accents -->
+        <div class="absolute -top-24 -left-24 w-60 h-60 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-6">
+          <!-- Top Badge & Title -->
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-4">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Plataforma Financiera Comunitaria 2026</span>
+            </div>
+            
+            <div class="flex items-center space-x-3 mb-2">
+              <div class="w-12 h-12 rounded-2xl gradient-indigo flex items-center justify-center text-white shadow-xl glow-indigo">
+                <i data-lucide="wallet-cards" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
+                  NATILLERA 2026
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Control de Ahorro y Créditos en la Nube</p>
+              </div>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mt-3">
+              Sistema integral privado para el control quincenal de ahorros, gestión de créditos comunitarios con cálculo de intereses en tiempo real y emisión automatizada de comprobantes directos para WhatsApp.
+            </p>
           </div>
-          <p class="text-[11px] text-slate-400 font-medium tracking-wide">Admin: <span id="headerAdminName" class="text-slate-200">Santiago Henao</span></p>
+
+          <!-- Feature Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+              <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white block font-bold">13 Socios Activos</strong>
+                <p class="text-[11px] text-slate-400 mt-0.5">Control de aportes quincenales, metas anuales y cumplimiento en vivo.</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+              <div class="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                <i data-lucide="percent" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white block font-bold">Créditos al 0.5% Mensual</strong>
+                <p class="text-[11px] text-slate-400 mt-0.5">Intereses diarios exactos y congelamiento automático a fecha de pago.</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+              <div class="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white block font-bold">Comprobantes WhatsApp</strong>
+                <p class="text-[11px] text-slate-400 mt-0.5">Recibos digitales y descarga de imágenes HD con un solo clic.</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-surface-card/60 border border-slate-700/50 flex items-start space-x-3">
+              <div class="p-2 rounded-xl bg-purple-500/20 text-purple-400 shrink-0">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white block font-bold">Seguridad con Auto-Cierre</strong>
+                <p class="text-[11px] text-slate-400 mt-0.5">Cierre de sesión automático tras 30 minutos de inactividad.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Banner Footer -->
+        <div class="relative z-10 mt-6 pt-4 border-t border-slate-700/60 grid grid-cols-4 gap-2 text-center text-xs">
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Socios</span>
+            <strong class="text-white text-base font-black">13</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Quincenas</span>
+            <strong class="text-indigo-400 text-base font-black">24</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Créditos</span>
+            <strong class="text-amber-400 text-base font-black">25</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Abonos</span>
+            <strong class="text-emerald-400 text-base font-black">35</strong>
+          </div>
         </div>
       </div>
 
-      <!-- Quick Action Badges & Clock -->
-      <div class="hidden md:flex items-center space-x-4">
-        <div class="flex items-center space-x-2 text-xs text-slate-400 px-3 py-1.5 rounded-lg bg-surface-card/60 border border-slate-700/50">
-          <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400"></i>
-          <span id="currentDateDisplay">Cargando fecha...</span>
+      <!-- Right Column: Login Card (5 cols) -->
+      <div class="lg:col-span-5 glass-panel p-6 sm:p-8 rounded-3xl border border-surface-border shadow-2xl flex flex-col justify-between relative">
+        <div>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-700/60">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                <i data-lucide="lock" class="w-5 h-5 text-indigo-400"></i>
+                <span>Acceso Administrativo</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">Ingresa tus credenciales autorizadas</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+              Admin
+            </span>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div id="loginErrorAlert" class="hidden mt-4 p-3 rounded-xl bg-rose-950/70 border border-rose-500/50 text-rose-200 text-xs flex items-center space-x-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+            <span id="loginErrorMsg">Credenciales incorrectas. Intenta de nuevo.</span>
+          </div>
+
+          <!-- Form -->
+          <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="mt-5 space-y-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1.5">Usuario del Administrador</label>
+              <div class="relative">
+                <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="loginUsername" required autocomplete="username" placeholder="shenao356" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-indigo-500 transition" />
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="font-semibold text-slate-300">Contraseña</label>
+              </div>
+              <div class="relative">
+                <i data-lucide="key" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface-card border border-slate-700 text-white font-medium focus:outline-none focus:border-indigo-500 transition font-mono" />
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+                  <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="loginRememberMe" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-surface-card border-slate-700" />
+                <span class="text-slate-400 text-[11px] font-medium">Recordar en este equipo</span>
+              </label>
+
+              <button type="button" onclick="autoFillAdminCredentials()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
+                Auto-completar
+              </button>
+            </div>
+
+            <button type="submit" id="btnLoginSubmit" class="w-full py-3 rounded-xl gradient-indigo hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg glow-indigo transition transform active:scale-[0.99] mt-2">
+              <i data-lucide="log-in" class="w-4 h-4"></i>
+              <span>Ingresar al Tablero</span>
+            </button>
+          </form>
         </div>
 
-        <button onclick="exportFullExcel()" title="Descargar como Excel" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/30 transition">
-          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-          <span>Exportar Excel</span>
-        </button>
-
-        <button onclick="downloadJsonBackup()" title="Descargar Copia de Seguridad JSON" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600/20 text-brand-300 border border-brand-500/40 hover:bg-brand-600/30 transition">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i>
-          <span>Respaldo</span>
-        </button>
-      </div>
-
-      <!-- Mobile Quick Menu Button -->
-      <div class="flex md:hidden items-center space-x-2">
-        <button onclick="openModal('modalAbonoRapido')" class="p-2 rounded-lg bg-brand-600 text-white shadow-md text-xs font-bold flex items-center space-x-1">
-          <i data-lucide="plus" class="w-4 h-4"></i>
-          <span>Abonar</span>
-        </button>
+        <div class="mt-6 pt-4 border-t border-slate-700/60 text-[11px] text-slate-400 space-y-2">
+          <div class="flex items-center space-x-2 text-amber-300/90">
+            <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0 text-amber-400"></i>
+            <span>Cierre automático por 30 minutos de inactividad.</span>
+          </div>
+          <p class="text-slate-500 text-[10px]">
+            Solo el administrador oficial (<strong class="text-slate-400">shenao356</strong>) tiene permisos de edición y despacho de comprobantes.
+          </p>
+        </div>
       </div>
 
     </div>
-  </header>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN APP CONTAINER (SOLO VISIBLE CON LOGIN)-->
+  <!-- ========================================== -->
+  <div id="appContainer" class="hidden min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        <!-- Brand Logo & Title -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('dashboard')">
+          <div class="w-10 h-10 rounded-xl gradient-indigo flex items-center justify-center text-white shadow-lg glow-indigo">
+            <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">NATILLERA</span>
+              <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">2026</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium tracking-wide">Admin: <span id="headerAdminName" class="text-slate-200 font-semibold">shenao356</span></p>
+          </div>
+        </div>
+
+        <!-- Quick Action Badges & Clock -->
+        <div class="hidden md:flex items-center space-x-3">
+          <div class="flex items-center space-x-2 text-xs text-slate-400 px-3 py-1.5 rounded-lg bg-surface-card/60 border border-slate-700/50">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span id="currentDateDisplay">Cargando fecha...</span>
+          </div>
+
+          <!-- Inactivity Countdown Badge -->
+          <div class="flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg bg-surface-card/60 border border-slate-700/50" title="Tiempo de inactividad restante antes de auto-cerrar sesión">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span class="text-slate-400 hidden xl:inline">Inactividad:</span>
+            <span id="headerInactivityBadge" class="font-mono font-bold text-amber-300">30:00</span>
+          </div>
+
+          <button onclick="exportFullExcel()" title="Descargar como Excel" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/30 transition">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <span>Exportar Excel</span>
+          </button>
+
+          <button onclick="downloadJsonBackup()" title="Descargar Copia de Seguridad JSON" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600/20 text-brand-300 border border-brand-500/40 hover:bg-brand-600/30 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Respaldo</span>
+          </button>
+
+          <button onclick="logoutAdmin()" title="Cerrar sesión de administrador" class="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600/20 text-rose-300 border border-rose-500/40 hover:bg-rose-600/30 transition">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Salir</span>
+          </button>
+        </div>
+
+        <!-- Mobile Quick Menu Buttons -->
+        <div class="flex md:hidden items-center space-x-2">
+          <button onclick="logoutAdmin()" title="Cerrar Sesión" class="p-2 rounded-lg bg-rose-600/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openModal('modalAbonoRapido')" class="p-2 rounded-lg bg-brand-600 text-white shadow-md text-xs font-bold flex items-center space-x-1">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Abonar</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
 
   <!-- Main Layout Container: Sidebar + Content -->
   <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
@@ -168,6 +367,27 @@
           <p class="text-[11px] text-slate-400 leading-snug">
             Ahorrado: <strong id="sidebarAhorradoTotal" class="text-white">$11.540.000</strong> de $12.480.000
           </p>
+        </div>
+
+        <!-- Admin Session & Logout Block -->
+        <div class="mt-4 p-3.5 rounded-xl bg-surface-card/80 border border-slate-700/60 text-xs space-y-2">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-400 flex items-center justify-center font-bold">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Sesión Activa</div>
+              <div class="text-xs font-bold text-white truncate">shenao356</div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-700/40">
+            <span>Inactividad:</span>
+            <span id="sidebarInactivityBadge" class="font-mono text-amber-400 font-bold">30:00</span>
+          </div>
+          <button onclick="logoutAdmin()" class="w-full mt-1 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span>Cerrar Sesión</span>
+          </button>
         </div>
 
       </nav>
@@ -1116,6 +1336,8 @@
       <span class="text-[10px] font-bold mt-0.5">Ajustes</span>
     </button>
   </nav>
+
+  </div> <!-- /#appContainer -->
 
   <!-- ========================================== -->
   <!-- MODALS SYSTEM                              -->
