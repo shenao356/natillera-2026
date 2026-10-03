@@ -36,6 +36,70 @@ document.addEventListener('DOMContentLoaded', () => {
   lucide.createIcons();
 });
 
+const KNOWN_NAME_ALIASES = {
+  'ANA LOPEZ': 'ANA MARIA LOPEZ',
+  'ANA MARÍA LÓPEZ': 'ANA MARIA LOPEZ',
+  'ANA MARIA LOPEZ': 'ANA MARIA LOPEZ'
+};
+
+function normalizeSocioName(name) {
+  if (!name) return '';
+  let clean = String(name).trim().toUpperCase().replace(/\s+/g, ' ');
+  return KNOWN_NAME_ALIASES[clean] || clean;
+}
+
+function unifyAndNormalizeData(dataObj) {
+  if (!dataObj) return;
+
+  // 1. Normalize and deduplicate Ahorradores
+  const seenAhorradores = {};
+  const cleanAhorradores = [];
+
+  (dataObj.ahorradores || []).forEach(a => {
+    const norm = normalizeSocioName(a.nombre);
+    if (!seenAhorradores[norm]) {
+      a.nombre = norm;
+      seenAhorradores[norm] = a;
+      cleanAhorradores.push(a);
+    } else {
+      // Merge phone if missing in existing
+      if (a.telefono && !seenAhorradores[norm].telefono) {
+        seenAhorradores[norm].telefono = a.telefono;
+      }
+    }
+  });
+
+  dataObj.ahorradores = cleanAhorradores;
+  dataObj.ahorradores.forEach((a, i) => { a.id = i + 1; });
+
+  // 2. Normalize Quincenas payments
+  (dataObj.quincenas || []).forEach(q => {
+    if (q.pagos) {
+      const newPagos = {};
+      Object.keys(q.pagos).forEach(k => {
+        const norm = normalizeSocioName(k);
+        if (!newPagos[norm]) {
+          newPagos[norm] = q.pagos[k];
+        } else {
+          newPagos[norm].valor = (parseFloat(newPagos[norm].valor) || 0) + (parseFloat(q.pagos[k].valor) || 0);
+          if (q.pagos[k].formaPago) newPagos[norm].formaPago = q.pagos[k].formaPago;
+        }
+      });
+      q.pagos = newPagos;
+    }
+  });
+
+  // 3. Normalize Creditos
+  (dataObj.creditos || []).forEach(c => {
+    c.socio = normalizeSocioName(c.socio);
+  });
+
+  // 4. Normalize Abonos
+  (dataObj.abonos || []).forEach(ab => {
+    ab.socio = normalizeSocioName(ab.socio);
+  });
+}
+
 function initStorage() {
   const saved = localStorage.getItem('natillera_2026_data');
   if (saved) {
@@ -47,9 +111,14 @@ function initStorage() {
     }
   } else if (window.INITIAL_NATILLERA_DATA) {
     AppState.data = JSON.parse(JSON.stringify(window.INITIAL_NATILLERA_DATA));
-    saveState();
   } else {
     showToast('Error: No se encontraron datos iniciales', 'error');
+  }
+
+  // Automatic uppercase and duplicate unification pass
+  if (AppState.data) {
+    unifyAndNormalizeData(AppState.data);
+    saveState();
   }
 }
 
@@ -129,9 +198,10 @@ function calculateCreditMetrics(credito) {
     ? (credito.interesesCongelados !== undefined && credito.interesesCongelados !== null ? credito.interesesCongelados : interesesCalculados)
     : interesesCalculados;
 
-  // Filter Abonos for this specific credit
+  // Filter Abonos for this specific credit using normalized socio name
+  const creditSocioNorm = normalizeSocioName(credito.socio);
   const abonos = (AppState.data.abonos || []).filter(a => {
-    return a.socio.toLowerCase() === credito.socio.toLowerCase() && 
+    return normalizeSocioName(a.socio) === creditSocioNorm && 
            (a.numCredito == credito.numInterno || a.creditoId === credito.id);
   });
 
@@ -152,6 +222,7 @@ function calculateCreditMetrics(credito) {
 
   return {
     ...credito,
+    socio: creditSocioNorm,
     dias,
     interesesTotales,
     totalAbonoInteres,
@@ -166,14 +237,16 @@ function calculateCreditMetrics(credito) {
 }
 
 /**
- * Consolidates total savings per member from all quincenas
+ * Consolidates total savings per member from all quincenas with normalized uppercase names
  */
 function getConsolidatedAhorros() {
   const result = {};
   
   (AppState.data.ahorradores || []).forEach(a => {
-    result[a.nombre] = {
+    const norm = normalizeSocioName(a.nombre);
+    result[norm] = {
       ...a,
+      nombre: norm,
       totalAhorrado: 0,
       quincenasPagadas: 0,
       adelantadas: 0
@@ -183,13 +256,14 @@ function getConsolidatedAhorros() {
   (AppState.data.quincenas || []).forEach(q => {
     if (!q.pagos) return;
     Object.keys(q.pagos).forEach(mName => {
+      const norm = normalizeSocioName(mName);
       const payment = q.pagos[mName];
-      if (result[mName]) {
+      if (result[norm]) {
         const val = parseFloat(payment.valor) || 0;
-        result[mName].totalAhorrado += val;
-        if (val > 0) result[mName].quincenasPagadas++;
+        result[norm].totalAhorrado += val;
+        if (val > 0) result[norm].quincenasPagadas++;
         if (payment.formaPago && payment.formaPago.toUpperCase().includes('ADELANT')) {
-          result[mName].adelantadas++;
+          result[norm].adelantadas++;
         }
       }
     });
@@ -805,17 +879,23 @@ function renderCreditosList() {
 // VIEW 4: SOCIOS
 // ==========================================
 
+function getUniqueSociosList() {
+  const sociosSet = new Set();
+  (AppState.data.ahorradores || []).forEach(a => {
+    if (a.nombre) sociosSet.add(normalizeSocioName(a.nombre));
+  });
+  (AppState.data.creditos || []).forEach(c => {
+    if (c.socio) sociosSet.add(normalizeSocioName(c.socio));
+  });
+  return Array.from(sociosSet).sort();
+}
+
 function renderSociosView() {
   const container = document.getElementById('sociosContainer');
   if (!container) return;
 
   const ahorradoresMap = getConsolidatedAhorros();
-  const sociosSet = new Set();
-
-  (AppState.data.ahorradores || []).forEach(a => sociosSet.add(a.nombre));
-  (AppState.data.creditos || []).forEach(c => sociosSet.add(c.socio));
-
-  const sociosList = Array.from(sociosSet).sort();
+  const sociosList = getUniqueSociosList();
 
   container.innerHTML = sociosList.map(nombre => {
     const ahorroObj = ahorradoresMap[nombre];
@@ -873,24 +953,26 @@ function renderSociosView() {
 }
 
 function editSocioPhone(nombre, currentPhone) {
-  const newPhone = prompt(`Ingresa el número de WhatsApp para ${nombre} (Ejemplo: 573001234567):`, currentPhone || '');
+  const norm = normalizeSocioName(nombre);
+  const newPhone = prompt(`Ingresa el número de WhatsApp para ${norm} (Ejemplo: 573001234567 o 3001234567):`, currentPhone || '');
   if (newPhone !== null) {
-    let ahorrador = (AppState.data.ahorradores || []).find(a => a.nombre.toLowerCase() === nombre.toLowerCase());
+    const clean = cleanPhoneNumber(newPhone);
+    let ahorrador = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === norm);
     if (ahorrador) {
-      ahorrador.telefono = newPhone.trim();
+      ahorrador.telefono = clean;
     } else {
       AppState.data.ahorradores.push({
         id: (AppState.data.ahorradores.length + 1),
-        nombre: nombre,
+        nombre: norm,
         modalidad: 'Quincenal',
         cuotaBase: 40000,
         metaAnual: 960000,
-        telefono: newPhone.trim()
+        telefono: clean
       });
     }
     saveState();
     refreshAllViews();
-    showToast(`Teléfono guardado para ${nombre}`, 'success');
+    showToast(`WhatsApp ${clean ? '+' + clean : 'guardado'} para ${norm}`, 'success');
   }
 }
 
@@ -904,11 +986,7 @@ function populateDropdowns() {
   const nuevoCreditoSocioSelect = document.getElementById('nuevoCreditoSocioSelect');
   const abonoSocioSelect = document.getElementById('abonoSocioSelect');
 
-  const sociosSet = new Set();
-  (AppState.data.ahorradores || []).forEach(a => sociosSet.add(a.nombre));
-  (AppState.data.creditos || []).forEach(c => sociosSet.add(c.socio));
-  const list = Array.from(sociosSet).sort();
-
+  const list = getUniqueSociosList();
   const optionsHtml = list.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
 
   if (socioSelect) socioSelect.innerHTML = optionsHtml;
@@ -1017,7 +1095,7 @@ function updateWhatsAppStatusBadge(phone) {
 }
 
 function quickEditCurrentSocioPhone() {
-  const socio = document.getElementById('receiptSocioSelect')?.value;
+  const socio = normalizeSocioName(document.getElementById('receiptSocioSelect')?.value);
   const rawTel = document.getElementById('receiptTelefonoInput')?.value.trim();
   const cleanTel = cleanPhoneNumber(rawTel);
 
@@ -1026,7 +1104,7 @@ function quickEditCurrentSocioPhone() {
     return;
   }
 
-  let user = (AppState.data.ahorradores || []).find(a => a.nombre.toLowerCase() === socio.toLowerCase());
+  let user = (AppState.data.ahorradores || []).find(a => normalizeSocioName(a.nombre) === socio);
   if (user) {
     user.telefono = cleanTel;
   } else {
@@ -1295,7 +1373,7 @@ function closeModal(modalId) {
 // Form: Aporte Ahorro
 function handleSaveAporteAhorro(e) {
   e.preventDefault();
-  const socio = document.getElementById('aporteSocioSelect').value;
+  const socio = normalizeSocioName(document.getElementById('aporteSocioSelect').value);
   const quincena = document.getElementById('aporteQuincenaSelect').value;
   const valor = parseFloat(document.getElementById('aporteValorInput').value) || 0;
   const forma = document.getElementById('aporteFormaPagoSelect').value;
@@ -1322,14 +1400,14 @@ function handleSaveAporteAhorro(e) {
 
 function quickPayAhorro(nombre, cuotaBase) {
   openModal('modalAporteAhorro');
-  document.getElementById('aporteSocioSelect').value = nombre;
+  document.getElementById('aporteSocioSelect').value = normalizeSocioName(nombre);
   document.getElementById('aporteValorInput').value = cuotaBase;
 }
 
 function editMatrizCell(quincena, socio, valorActual, formaActual) {
   openModal('modalAporteAhorro');
   document.getElementById('aporteQuincenaSelect').value = quincena;
-  document.getElementById('aporteSocioSelect').value = socio;
+  document.getElementById('aporteSocioSelect').value = normalizeSocioName(socio);
   document.getElementById('aporteValorInput').value = valorActual;
   document.getElementById('aporteFormaPagoSelect').value = formaActual || 'TRANSFERENCIA';
 }
@@ -1337,7 +1415,7 @@ function editMatrizCell(quincena, socio, valorActual, formaActual) {
 // Form: Nuevo Crédito
 function handleSaveNuevoCredito(e) {
   e.preventDefault();
-  const socio = document.getElementById('nuevoCreditoSocioSelect').value;
+  const socio = normalizeSocioName(document.getElementById('nuevoCreditoSocioSelect').value);
   const valor = parseFloat(document.getElementById('nuevoCreditoMontoInput').value) || 0;
   const fecha = document.getElementById('nuevoCreditoFechaInput').value || getTodayStr();
   const tasa = parseFloat(document.getElementById('nuevoCreditoTasaInput').value) || 0.005;
@@ -1371,16 +1449,16 @@ function handleSaveNuevoCredito(e) {
 // Form: Abono a Crédito
 function openAbonoForCredito(credId, socio, saldoCap, saldoInt, numInterno) {
   openModal('modalAbonoRapido');
-  document.getElementById('abonoSocioSelect').value = socio;
+  document.getElementById('abonoSocioSelect').value = normalizeSocioName(socio);
   onAbonoSocioChange();
   document.getElementById('abonoCreditoSelect').value = credId;
   onAbonoCreditoSelectChange();
 }
 
 function onAbonoSocioChange() {
-  const socio = document.getElementById('abonoSocioSelect').value;
+  const socio = normalizeSocioName(document.getElementById('abonoSocioSelect').value);
   const select = document.getElementById('abonoCreditoSelect');
-  const userCredits = (AppState.data.creditos || []).filter(c => c.socio.toLowerCase() === socio.toLowerCase());
+  const userCredits = (AppState.data.creditos || []).filter(c => normalizeSocioName(c.socio) === socio);
 
   if (userCredits.length === 0) {
     select.innerHTML = '<option value="">(Sin créditos activos)</option>';
@@ -1428,7 +1506,7 @@ function autoDistributeAbono() {
 
 function handleSaveAbonoCredito(e) {
   e.preventDefault();
-  const socio = document.getElementById('abonoSocioSelect').value;
+  const socio = normalizeSocioName(document.getElementById('abonoSocioSelect').value);
   const credId = document.getElementById('abonoCreditoSelect').value;
   const total = parseFloat(document.getElementById('abonoTotalInput').value) || 0;
   const fecha = document.getElementById('abonoFechaInput').value || getTodayStr();
@@ -1512,12 +1590,13 @@ function deleteCredito(credId) {
 // Modal Nuevo Socio
 function handleSaveNuevoSocio(e) {
   e.preventDefault();
-  const nombre = document.getElementById('nuevoSocioNombreInput').value.trim().toUpperCase();
-  const tel = document.getElementById('nuevoSocioTelefonoInput').value.trim();
+  const nombre = normalizeSocioName(document.getElementById('nuevoSocioNombreInput').value);
+  const rawTel = document.getElementById('nuevoSocioTelefonoInput').value.trim();
+  const tel = cleanPhoneNumber(rawTel);
   const modalidad = document.getElementById('nuevoSocioModalidadSelect').value;
   const cuota = parseFloat(document.getElementById('nuevoSocioCuotaInput').value) || 40000;
 
-  const exists = (AppState.data.ahorradores || []).some(a => a.nombre.toLowerCase() === nombre.toLowerCase());
+  const exists = (AppState.data.ahorradores || []).some(a => normalizeSocioName(a.nombre) === nombre);
   if (exists) {
     alert('Ya existe un socio con este nombre.');
     return;
@@ -1563,8 +1642,8 @@ function openModalEditarAhorrador(id) {
 function handleSaveEditarAhorrador(e) {
   e.preventDefault();
   const id = parseInt(document.getElementById('editAhorradorId').value);
-  const oldName = document.getElementById('editAhorradorOldName').value.trim();
-  const newName = document.getElementById('editAhorradorNombre').value.trim().toUpperCase();
+  const oldName = normalizeSocioName(document.getElementById('editAhorradorOldName').value);
+  const newName = normalizeSocioName(document.getElementById('editAhorradorNombre').value);
   const rawTel = document.getElementById('editAhorradorTelefono').value.trim();
   const tel = cleanPhoneNumber(rawTel);
   const modalidad = document.getElementById('editAhorradorModalidad').value;
@@ -1583,12 +1662,12 @@ function handleSaveEditarAhorrador(e) {
       }
     });
     (AppState.data.creditos || []).forEach(c => {
-      if (c.socio.toLowerCase() === oldName.toLowerCase()) {
+      if (normalizeSocioName(c.socio) === oldName) {
         c.socio = newName;
       }
     });
     (AppState.data.abonos || []).forEach(ab => {
-      if (ab.socio.toLowerCase() === oldName.toLowerCase()) {
+      if (normalizeSocioName(ab.socio) === oldName) {
         ab.socio = newName;
       }
     });
